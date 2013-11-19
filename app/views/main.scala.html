@@ -1,0 +1,84 @@
+@(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base href="@blog.path/"/>
+
+    <title>all that jazz@title.map(" - " + _).getOrElse("")</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="@routes.WebJarAssets.at(WebJarAssets.locate("css/bootstrap.min.css"))">
+    <link rel="stylesheet" href="@routes.Assets.at("css/main.css")">
+
+  </head>
+  <body>
+
+    <div class="container">
+
+      <div class="row">
+
+        <input type="checkbox" class="slideout-check" id="slideout-check" />
+
+        <div class="main col-xs-12 col-sm-8">
+
+          <header>
+            <h1>all that jazz</h1>
+
+            <div class="slideout-tab">
+              <label for="slideout-check">☰</label>
+            </div>
+
+            <h2>james' blog about scala and all that jazz</h2>
+          </header>
+
+          @content
+        </div>
+        <div class="slideout col-sm-4">
+
+          <header>
+            <h2>About me</h2>
+          </header>
+          <div class="description">
+
+            <img style="float: right; margin: 5px;" src="@router.asset("images/james.jpg")"/>
+            Hi! My name is James Roper, and I am a software developer with a particular interest in open source
+            development and trying new things. I program in Scala, Java, PHP, Python and Javascript, and I work
+            for <a href="http://typesafe.com">Typesafe</a> as a developer on
+            <a href="http://playframework.com">Play framework</a>. I also have a full life outside the world of IT,
+            am a passionate Christian, enjoy playing a variety of musical instruments and sports, and currently I
+            live in Sydney.
+
+            <br/>
+            <br/>
+            <a href="https://twitter.com/jroper" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @@jroper</a>
+            <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          </div>
+
+          <nav>
+            <ul class="tagCloud">
+            @for(tag <- blog.tagCloud) {
+              <li class="tagCloud@tag._3">
+                <a href="@router.tag(tag._1)" title="blog entries: @tag._2">@tag._1</a></li>
+            }
+            </ul>
+
+            <ul class="years row">
+            @for(year <- blog.years) {
+              <li class="col-xs-6">
+                <h4><a href="@router.year(year.year)">@year.year</a></h4>
+                <ul class="months">
+                @for(month <- year.months) {
+                  <li><a href="@router.month(month._2.year, month._2.month)">@month._2.name (@month._2.posts.size)</a></li>
+                }
+                </ul>
+              </li>
+            }
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

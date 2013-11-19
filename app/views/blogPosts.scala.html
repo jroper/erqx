@@ -1,0 +1,29 @@
+@(blog: Blog, router: BlogReverseRouter, title: Option[String], posts: List[(BlogPost, String)], previous: Option[Call], next: Option[Call])
+
+@main(blog, router, title) {
+
+  <nav>
+    @for(t <- title) {
+      <h2>@t</h2>
+    }
+    <ul class="pager">
+      @for(p <- previous) {
+        <li class="previous"><a href="@p">&larr; Newer</a></li>
+      }
+      @for(n <- next) {
+        <li class="next"><a href="@n">Older &rarr;</a></li>
+      }
+    </ul>
+  </nav>
+
+  @for(post <- posts) {
+    <article>
+      <h1 class="postTitle"><a href="@router.view(post._1)">@post._1.title</a></h1>
+
+      <div class="postContent">
+        @Html(post._2)
+      </div>
+
+    </article>
+  }
+}
