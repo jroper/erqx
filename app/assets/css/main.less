@@ -1,64 +1,3 @@
-/* Ensure no images in blog posts expand outside their parent on mobiles */
-@media all and (max-width: 768px) {
-  article img {
-    display: block;
-    height: auto;
-    max-width: 100%;
-  }
-
-  .slideout {
-    position: fixed;
-    top: 0;
-    left: 20%;
-    z-index: 0;
-    background-color: #181818;
-    color: #DDDDDD;
-    a, a:visited {
-      color: #5E8EBB;
-    }
-    min-height: 100%;
-  }
-
-  .slideout nav {
-    display: none;
-  }
-
-  label.slideout-tab {
-    display: block;
-    float: right;
-    margin-right: -15px;
-    border: 1px solid #999;
-    border-radius: 5px 0 0 5px;
-    border-right: none;
-    cursor: pointer;
-
-    padding: 5px 8px;
-
-    .icon-bar {
-      display: block;
-      width: 22px;
-      height: 2px;
-      margin: 4px 0;
-      border-radius: 1px;
-      background-color: #666;
-    }
-  }
-
-  .main {
-    z-index: 1;
-    position: absolute;
-    background-color: white;
-    transition: right 0.4s ease;
-    -webkit-transition: right 0.4s ease;
-    -moz-transition: right 0.4s ease;
-    min-height: 100%;
-  }
-
-  #slideout-check:checked + .main {
-    right: 80%;
-  }
-}
-
 .slideout {
   padding-top: 70px;
   h2 {
@@ -89,6 +28,9 @@ header {
       font-size: 12pt;
       font-weight: 200;
       color: #999;
+    }
+    .pagination {
+      display: none;
     }
   }
 }
@@ -190,3 +132,90 @@ ul.tagCloud {
     }
   }
 }
+
+@media all and (max-width: 768px) {
+  article img {
+    display: block;
+    height: auto;
+    max-width: 100%;
+  }
+
+  div.slideout {
+    position: fixed;
+    top: 0;
+    padding-top: 0;
+    left: 10%;
+    z-index: 0;
+    background-color: #181818;
+    color: #DDDDDD;
+    a, a:visited {
+      color: #5E8EBB;
+    }
+    min-height: 100%;
+  }
+
+  .slideout nav {
+    display: none;
+  }
+
+  label.slideout-tab {
+    display: block;
+    float: right;
+
+    font-weight: 200;
+
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+
+    margin-right: -29px;
+    margin-top: 30px;
+    padding: 5px 10px;
+    border: 1px solid #999;
+    border-radius: 5px 5px 0 0;
+    border-bottom: none;
+
+    cursor: pointer;
+
+  }
+
+  .main {
+    z-index: 1;
+    position: absolute;
+    background-color: white;
+    transition: right 0.4s ease;
+    -webkit-transition: right 0.4s ease;
+    -moz-transition: right 0.4s ease;
+    min-height: 100%;
+
+    header {
+      h1 {
+        font-size: 18pt;
+        font-weight: 200;
+        height: 20px;
+      }
+      h2 {
+        display: none;
+      }
+    }
+
+    nav {
+      .pagination {
+        display: block;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        margin: 5px;
+      }
+      .pager {
+        display: none;
+      }
+    }
+  }
+
+  #slideout-check:checked + .main {
+    right: 90%;
+  }
+}
+
