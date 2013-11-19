@@ -23,18 +23,25 @@
     display: none;
   }
 
-  div.slideout-tab {
+  label.slideout-tab {
     display: block;
     float: right;
-    font-size: 30px;
-    padding: 0 5px;
     margin-right: -15px;
-    line-height: 30px;
     border: 1px solid #999;
     border-radius: 5px 0 0 5px;
     border-right: none;
-    color: #666;
     cursor: pointer;
+
+    padding: 5px 8px;
+
+    .icon-bar {
+      display: block;
+      width: 22px;
+      height: 2px;
+      margin: 4px 0;
+      border-radius: 1px;
+      background-color: #666;
+    }
   }
 
   .main {
@@ -42,6 +49,8 @@
     position: absolute;
     background-color: white;
     transition: right 0.4s ease;
+    -webkit-transition: right 0.4s ease;
+    -moz-transition: right 0.4s ease;
     min-height: 100%;
   }
 
