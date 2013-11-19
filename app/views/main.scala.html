@@ -79,3 +79,15 @@
     </div>
   </body>
 </html>
+
+<style type="text/css">
+  @@import "@routes.WebJarAssets.at(WebJarAssets.locate("prettify.css"))";
+</style>
+<script type="text/javascript" charset="utf-8" src="@routes.WebJarAssets.at(WebJarAssets.locate("jquery.min.js"))"></script>
+<script type="text/javascript" charset="utf-8" src="@routes.WebJarAssets.at(WebJarAssets.locate("prettify.js"))"></script>
+<script type="text/javascript" charset="utf-8" src="@routes.WebJarAssets.at(WebJarAssets.locate("lang-scala.js"))"></script>
+<script type="text/javascript">
+$(function(){
+window.prettyPrint && prettyPrint()
+});
+</script>

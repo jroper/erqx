@@ -217,7 +217,7 @@ object MigratePebbleBlog {
    */
   def renderPebbleWiki(post: String): String = RadeoxRenderer.wikify(post)
 
-  val OldBrushCode = """(?s)<pre\s+name="code"\s+class="(?:brush: )?([^":]+)[^"]*"\s*>(.*?)</pre>""".r
+  val OldBrushCode = """(?s)<pre\s+name="code"\s+class="(?:brush: )?([^":]+)[^"]*"\s*>\n?(.*?)</pre>""".r
 
   /**
    * Migrate old brush code to google syntax highlighter
@@ -226,7 +226,7 @@ object MigratePebbleBlog {
     OldBrushCode.replaceAllIn(post, """<pre class="prettyprint"><code class="language-$1">$2</code></pre>""")
   }
 
-  val NewBrushCode = """(?s)<pre\s+class="brush: ([^"]+)"\s*>(.*?)</pre>""".r
+  val NewBrushCode = """(?s)<pre\s+class="brush: ([^"]+)"\s*>\n?(.*?)</pre>""".r
 
   /**
    * Migrate new brush code to google syntax highlighter
