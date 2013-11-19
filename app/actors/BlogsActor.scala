@@ -19,7 +19,9 @@ class BlogsActor extends Actor {
   def receive = {
     case LoadBlogs => {
       val blogConfigs = List(
-        BlogConfig("default", GitConfig(new File("/Users/jroper/tmp/newblog"), "master", None), "")
+        BlogConfig("default", GitConfig(new File(
+          Option(System.getProperty("blog.path")).getOrElse("/Users/jroper/tmp/theblog")
+        ), "master", None), "")
       )
 
       val blogs = blogConfigs.map { config =>
