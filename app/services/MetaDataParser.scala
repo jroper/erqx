@@ -1,9 +1,10 @@
 package services
 
 import java.io.InputStream
-import models.{PostDate, BlogPost}
+import models.{Yaml, BlogPost}
 import scalax.io.Resource
 import play.api.Logger
+import org.joda.time.DateTime
 
 object MetaDataParser {
 
@@ -31,32 +32,21 @@ object MetaDataParser {
       .dropWhile(_.isEmpty)
 
     // Extract attributes from the front matter
-    val (fTitle, fId, fDate, tags) = lines.nextOption match {
+    val (props, fTitle, fId, fDate, tags) = lines.nextOption match {
       case Some("---") =>
-        val frontMatter = lines.takeWhile(_ != "---")
-        val props = frontMatter.filterNot(_.isEmpty)
-          .map { line =>
-            val keyValue = line.split(":", 2)
-            val key = keyValue.head.trim
-            val value = keyValue.tail.headOption.getOrElse("").trim
-            key -> value
-          }.toMap
+        val frontMatter = lines.takeWhile(_ != "---").mkString("\n")
+
+        val props: Yaml = Yaml.parse(frontMatter)
+
         (
-          props.get("title"),
-          props.get("id"),
-          props.get("date").flatMap {
-            case DateTimeParser(ToInt(year), ToInt(month), ToInt(day), ToInt(hour), ToInt(minute)) =>
-              Some(PostDate(year, month, day, hour, minute))
-            case DateParser(ToInt(year), ToInt(month), ToInt(day)) =>
-              Some(PostDate(year, month, day))
-            case error =>
-              Logger.warn("Unparseable date: " + error)
-              None
-          },
-          props.get("tags").toSeq.flatMap(_.split(" +")).map(_.replace('+', ' '))
+          Yaml(props.map -- Seq("title", "id", "date", "tags")),
+          props.getString("title"),
+          props.getString("id").map(_.toString),
+          props.getDate("date"),
+          props.getString("tags").toSeq.flatMap(_.split(" +").map(_.replace('+', ' ')))
         )
 
-      case _ => (None, None, None, Seq())
+      case _ => (Yaml.empty, None, None, None, Nil)
     }
 
     // Extract id and format from the name
@@ -72,7 +62,7 @@ object MetaDataParser {
       case NameAttributeExtractor(ToInt(year), ToInt(month), ToInt(day), title) =>
         (
           Some(title.replace('_', ' ')),
-          Some(PostDate(year, month, day)),
+          Some(new DateTime(year, month, day, 0, 0)),
           title
         )
       case _ => 
@@ -82,9 +72,12 @@ object MetaDataParser {
     
     val id = fId getOrElse nId
     val title = fTitle orElse nTitle getOrElse id
-    val date = fDate orElse nDate getOrElse PostDate(0, 0, 0)
+    val date = fDate orElse nDate getOrElse new DateTime()
     
-    BlogPost(id, path, title, date, permalinkTitle, format, tags.toSet)
+    BlogPost(id, path, title, date, permalinkTitle, format, tags.toSet, props)
   }
 
 }
+
+
+

@@ -20,7 +20,7 @@ class FileLoader(gitRepository: GitRepository) extends Actor {
       sender ! blocking(gitRepository.loadStream(blog.hash, path).map {
         case (length, is) => FileStream(length, is, context.dispatcher)
       })
-    case RenderPost(blog, post) =>
+    case RenderPost(blog, post, absoluteUri) =>
       val rendered = blocking {
         gitRepository.loadContent(blog.hash, post.path).map { content =>
           // Strip off front matter
@@ -38,6 +38,18 @@ class FileLoader(gitRepository: GitRepository) extends Actor {
           }
         }
       }
-    sender ! rendered
+      val uriAdjusted = absoluteUri.flatMap { uri =>
+        rendered.map(c => replaceCommonUris(c, uri))
+      }.orElse(rendered)
+
+      sender ! uriAdjusted
   }
+
+  private def replaceCommonUris(s: String, uri: String): String = {
+    s.replaceAll("href=\"\\./", "href=\"" + uri)
+      .replaceAll("href='\\./", "href='" + uri)
+      .replaceAll("src=\"\\./", "src=\"" + uri)
+      .replaceAll("src='\\./", "src='" + uri)
+  }
+
 }

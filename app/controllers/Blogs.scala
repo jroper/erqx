@@ -58,6 +58,9 @@ object BlogPaths {
   val TagPattern = """/tags/([^/]+)\.html""".r
   val TagLink = "/tags/%s.html"
 
+  val FetchPattern = """/fetch/([^/]+)""".r
+  val FetchLink = "/fetch/%s"
+
   object ToInt {
     def unapply(s: String): Option[Int] = try {
       Some(s.toInt)
@@ -118,6 +121,14 @@ class BlogRouter(controller: BlogController, path: String) extends Routes {
         case ("GET", TagPattern(Decode(tag))) =>
           Some(controller.tag(tag, getPage))
 
+        // Atom feed
+        case ("GET", "/atom.xml") =>
+          Some(controller.atom())
+
+        // Fetch
+        case ("POST", FetchPattern(Decode(key))) =>
+          Some(controller.fetch(key))
+
         // Assets
         case ("GET", path) =>
           Some(controller.asset(path.drop(1)))
@@ -151,7 +162,11 @@ class BlogReverseRouter(path: String) {
 
   def tag(tag: String, page: Page = defaultPage) = Call("GET", withPaging(path + TagLink.format(encode(tag)), page))
 
-  def asset(path: String) = Call("GET", "/" + path)
+  def atom() = Call("GET", path + "/atom.xml")
+
+  def fetch(key: String) = Call("POST", FetchLink.format(key))
+
+  def asset(file: String) = Call("GET", path + "/" + file)
 
   private def withPaging(path: String, page: Page) = {
     val qs = (Nil ++

@@ -1,22 +1,12 @@
 package models
 
-import org.joda.time.{YearMonth, DateTime}
+import org.joda.time.{YearMonth}
 import scala.collection.SortedMap
 import scala.util.control.Exception._
 import org.joda.time.format.DateTimeFormat
-
-/**
- * The date a blog post was published
- */
-final case class PostDate(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0) {
-  val toDateTime = new DateTime(year, month, day, hour, minute)
-  lazy val format = PostDate.dateFormat.print(toDateTime)
-  val orderKey = toDateTime.getMillis
-}
+import play.api.i18n.Lang
 
 object PostDate {
-  implicit val ordering = Ordering.by((postDate: PostDate) => postDate.orderKey)
-
   val dateFormat = DateTimeFormat.forPattern("d MMMM yyyy")
 }
 
@@ -53,7 +43,7 @@ final case class Month(year: Int, month: Int, days: SortedMap[Int, Day], posts: 
 
   private lazy val partial = allCatch.opt(new YearMonth(year, month))
 
-  lazy val name = partial.map(_.monthOfYear.getAsText).getOrElse("Unknown")
+  def name(implicit lang: Lang) = partial.map(_.monthOfYear.getAsText(lang.toLocale)).getOrElse("Unknown")
 
   val orderKey = year * 12 + month
 }

@@ -2,7 +2,8 @@ package services
 
 import org.specs2.mutable.Specification
 import java.io.ByteArrayInputStream
-import models.{PostDate, BlogPost}
+import models._
+import org.joda.time.{DateTimeZone, DateTime}
 
 class MetaDataParserSpec extends Specification {
 
@@ -11,27 +12,27 @@ class MetaDataParserSpec extends Specification {
       MetaDataParser.parseFrontMatter(frontMatter(
         "id" -> "someid",
         "title" -> "Some title",
-        "date" -> "2013/11/16",
+        "date" -> "2013-11-16T00:00:00.0Z",
         "tags" -> "foo bar"
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("someid", "some/path", "Some title", PostDate(2013, 11, 16), "some_name", "md", Set("foo", "bar"))
+        BlogPost("someid", "some/path", "Some title", date(2013, 11, 16), "some_name", "md", Set("foo", "bar"))
     }
     "use name as id if not specified" in {
       MetaDataParser.parseFrontMatter(frontMatter(
         "title" -> "Some title",
-        "date" -> "2013/11/16",
+        "date" -> "2013-11-16T00:00:00.0Z",
         "tags" -> "foo bar"
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("2012-10-15-some_name", "some/path", "Some title", PostDate(2013, 11, 16), "some_name", "md",
+        BlogPost("2012-10-15-some_name", "some/path", "Some title", date(2013, 11, 16), "some_name", "md",
           Set("foo", "bar"))
     }
     "extract title from name if not specified" in {
       MetaDataParser.parseFrontMatter(frontMatter(
         "id" -> "someid",
-        "date" -> "2013/11/16",
+        "date" -> "2013-11-16T00:00:00.0Z",
         "tags" -> "foo bar"
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("someid", "some/path", "some name", PostDate(2013, 11, 16), "some_name", "md", Set("foo", "bar"))
+        BlogPost("someid", "some/path", "some name", date(2013, 11, 16), "some_name", "md", Set("foo", "bar"))
     }
     "extract date from name if not specified" in {
       MetaDataParser.parseFrontMatter(frontMatter(
@@ -39,35 +40,35 @@ class MetaDataParserSpec extends Specification {
         "title" -> "Some title",
         "tags" -> "foo bar"
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("someid", "some/path", "Some title", PostDate(2012, 10, 15), "some_name", "md", Set("foo", "bar"))
+        BlogPost("someid", "some/path", "Some title", new DateTime(2012, 10, 15, 0, 0), "some_name", "md", Set("foo", "bar"))
     }
     "work from name if nothing specified" in {
       MetaDataParser.parseFrontMatter(frontMatter(
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("2012-10-15-some_name", "some/path", "some name", PostDate(2012, 10, 15), "some_name", "md", Set())
+        BlogPost("2012-10-15-some_name", "some/path", "some name", new DateTime(2012, 10, 15, 0, 0), "some_name", "md", Set())
     }
     "allow dates with hours and minutes" in {
       MetaDataParser.parseFrontMatter(frontMatter(
-        "date" -> "2013/11/16 13:33"
+        "date" -> "2013-11-16T13:33:00.0Z"
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("2012-10-15-some_name", "some/path", "some name", PostDate(2013, 11, 16, 13, 33), "some_name", "md", Set())
+        BlogPost("2012-10-15-some_name", "some/path", "some name", date(2013, 11, 16, 13, 33), "some_name", "md", Set())
     }
     "allow tags with escaped spaces" in {
       MetaDataParser.parseFrontMatter(frontMatter(
         "tags" -> "foo+bar"
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("2012-10-15-some_name", "some/path", "some name", PostDate(2012, 10, 15), "some_name", "md", Set("foo bar"))
+        BlogPost("2012-10-15-some_name", "some/path", "some name", new DateTime(2012, 10, 15, 0, 0), "some_name", "md", Set("foo bar"))
     }
     "work from name if no front matter" in {
       MetaDataParser.parseFrontMatter(new ByteArrayInputStream("Hello".getBytes("UTF-8")),
         "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("2012-10-15-some_name", "some/path", "some name", PostDate(2012, 10, 15), "some_name", "md", Set())
+        BlogPost("2012-10-15-some_name", "some/path", "some name", new DateTime(2012, 10, 15, 0, 0), "some_name", "md", Set())
     }
     "allow colons in the title" in {
       MetaDataParser.parseFrontMatter(frontMatter(
-        "title" -> "This: is a blog post"
+        "title" -> "\"This: is a blog post\""
       ), "some/path", "2012-10-15-some_name.md") ===
-        BlogPost("2012-10-15-some_name", "some/path", "This: is a blog post", PostDate(2012, 10, 15), "some_name", "md", Set())
+        BlogPost("2012-10-15-some_name", "some/path", "This: is a blog post", new DateTime(2012, 10, 15, 0, 0), "some_name", "md", Set())
     }
   }
 
@@ -82,6 +83,10 @@ class MetaDataParserSpec extends Specification {
       """.stripMargin.format(
         props.map(p => p._1 + ": " + p._2).mkString("\n")
       ).getBytes("UTF-8"))
+  }
+
+  def date(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0) = {
+    new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
   }
 
 }

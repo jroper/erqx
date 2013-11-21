@@ -8,6 +8,11 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.revwalk.RevWalk
 import scalax.io.Resource
 import play.doc.{FileHandle, FileRepository}
+import models._
+import play.api.i18n.Lang
+import play.api.{Logger, Play}
+import play.api.Play.current
+import scala.util.control.Exception._
 
 class GitRepository(gitDir: File, branch: String, remote: Option[String]) {
 
@@ -66,6 +71,33 @@ class GitRepository(gitDir: File, branch: String, remote: Option[String]) {
     } getOrElse Nil
   }
 
+  def loadConfig(commitId: String) = {
+    val config = loadContent(commitId, "_config.yml").map(Yaml.parse).getOrElse(Yaml.empty)
+
+    val theme = config.getString("theme").flatMap { themeClassName =>
+      allCatch.either {
+        if (themeClassName.endsWith("$"))
+          Play.classloader.loadClass(themeClassName).getMethod("MODULE$").invoke(null).asInstanceOf[BlogTheme]
+        else
+          Play.classloader.loadClass(themeClassName).newInstance().asInstanceOf[BlogTheme]
+      } match {
+        case Right(t) => Some(t)
+        case Left(e) =>
+          Logger.warn("Unable to load theme", e)
+          None
+      }
+    } getOrElse DefaultTheme
+
+    BlogInfo(
+      title = config.getString("title").getOrElse("A blog with no name"),
+      subTitle = config.getString("subTitle"),
+      author = config.getString("author").getOrElse("No one"),
+      language = config.getString("language").getOrElse(Lang.defaultLang.code),
+      description = config.getString("description"),
+      theme = theme,
+      properties = config
+    )
+  }
 
   // A tree filter that finds files with the given name under the given base path
   private class FileWithNameFilter(basePath: String, name: String) extends TreeFilter {

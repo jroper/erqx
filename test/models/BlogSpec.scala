@@ -2,6 +2,7 @@ package models
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.Matcher
+import org.joda.time.DateTime
 
 class BlogSpec extends Specification {
 
@@ -58,7 +59,7 @@ class BlogSpec extends Specification {
   }
 
   def post(id: String, year: Int, month: Int, day: Int, tags: String*) =
-    BlogPost(id, id, id, PostDate(year, month, day), id, "md", Set(tags:_*))
-  def blog(posts: BlogPost*) = new Blog(posts.toList)
+    BlogPost(id, id, id, new DateTime(year, month, day, 0, 0), id, "md", Set(tags:_*), Yaml.empty)
+  def blog(posts: BlogPost*) = new Blog(posts.toList, "", "", BlogInfo("", None, "", ""))
 
 }

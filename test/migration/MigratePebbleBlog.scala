@@ -1,11 +1,11 @@
 package migration
 
 import java.io.File
-import models.{PostDate, BlogPost}
+import models.{Yaml, BlogPost}
 import scala.xml.{PCData, Elem, XML}
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.DateTimeZone
-import java.util.{Date, Locale}
+import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
+import org.joda.time.{DateTime, DateTimeZone}
+import java.util.Locale
 import scalax.file.Path
 
 /**
@@ -130,8 +130,8 @@ object MigratePebbleBlog {
 
   def formatPost(post: BlogPost, body: String): String = {
     val props = Map(
-      "title" -> post.title,
-      "date" -> formatDate(post.date)
+      "title" -> ("\"" + post.title + "\""),
+      "date" -> ISODateTimeFormat.dateTime.print(post.date)
     ) ++ (
       if (post.tags.isEmpty) Map()
       else Map("tags" -> post.tags.map(_.replace(' ', '+')).mkString(" "))
@@ -153,11 +153,11 @@ object MigratePebbleBlog {
 
         val date = parsePostDate(dateStr, timeZone)
         val permalinkTitle = toPermalinkTitle(title)
-        val id = "%04d-%02d-%02d-%s".format(date.year, date.month, date.day, permalinkTitle)
+        val id = "%04d-%02d-%02d-%s".format(date.year.get, date.monthOfYear.get, date.dayOfMonth.get, permalinkTitle)
         val path = id + ".html"
         val tags = tagsStr.split(" +").map(_.replace('+', ' ')).toSet
 
-        val post = BlogPost(id, path, title, date, permalinkTitle, "html", tags)
+        val post = BlogPost(id, path, title, date, permalinkTitle, "html", tags, Yaml.empty)
 
         val comments = parseComments(xml)
         Some((post, transformPost(body), comments))
@@ -202,10 +202,8 @@ object MigratePebbleBlog {
       .replaceAll("_*$", "")
   }
 
-  def parsePostDate(date: String, timeZone: String): PostDate = {
-    val dateTime = PebbleDateFormat.parseDateTime(date).toDateTime(DateTimeZone.forID(timeZone))
-    PostDate(dateTime.yearOfEra().get(), dateTime.monthOfYear().get(), dateTime.dayOfMonth().get(),
-      dateTime.hourOfDay().get(), dateTime.minuteOfHour().get())
+  def parsePostDate(date: String, timeZone: String): DateTime = {
+    PebbleDateFormat.parseDateTime(date).toDateTime(DateTimeZone.forID(timeZone))
   }
 
   def transformPost(post: String) = {
@@ -246,7 +244,4 @@ object MigratePebbleBlog {
 
   val PebbleDateFormat = DateTimeFormat.forPattern("dd MMM yyyy HH:mm:ss:SSS Z")
   val WpDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
-  def formatDate(date: PostDate) = {
-    "%04d/%02d/%02d %02d:%02d".format(date.year, date.month, date.day, date.hour, date.minute)
-  }
 }

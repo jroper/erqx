@@ -1,16 +1,18 @@
-@(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)
+@(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)(implicit req: RequestHeader)
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@blog.info.language">
   <head>
     <base href="@blog.path/"/>
 
-    <title>all that jazz@title.map(" - " + _).getOrElse("")</title>
+    <title>@blog.info.title@title.map(" - " + _).getOrElse("")</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="alternate" type="application/atom+xml" title="Atom" href="@router.atom()" />
+
     <link rel="stylesheet" href="@routes.WebJarAssets.at(WebJarAssets.locate("css/bootstrap.min.css"))">
-    <link rel="stylesheet" href="@routes.Assets.at("css/main.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("themes/jazzy/css/main.css")">
 
   </head>
   <body>
@@ -24,40 +26,32 @@
         <div class="main col-xs-12 col-sm-8">
 
           <header>
-            <h1><a href="@router.index()">all that jazz</a></h1>
+            <h1><a href="@router.index()">@blog.info.title</a></h1>
 
-            <h2>james' blog about scala and all that jazz</h2>
+            @for(subTitle <- blog.info.subTitle) {
+              <h2>@subTitle</h2>
+            }
           </header>
 
-          <label for="slideout-check" class="slideout-tab">About</label>
+          <label for="slideout-check" class="slideout-tab">@Messages("about")</label>
           @content
         </div>
         <div class="slideout col-sm-4">
 
           <header>
-            <h2>About me</h2>
+            <h2>@Messages("about.me")</h2>
           </header>
-          <div class="description">
-
-            <img style="float: right; margin: 5px;" src="@router.asset("images/james.jpg")"/>
-            Hi! My name is James Roper, and I am a software developer with a particular interest in open source
-            development and trying new things. I program in Scala, Java, PHP, Python and Javascript, and I work
-            for <a href="http://typesafe.com">Typesafe</a> as a developer on
-            <a href="http://playframework.com">Play framework</a>. I also have a full life outside the world of IT,
-            am a passionate Christian, enjoy playing a variety of musical instruments and sports, and currently I
-            live in Sydney.
-
-            <br/>
-            <br/>
-            <a href="https://twitter.com/jroper" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @@jroper</a>
-            <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-          </div>
+          @for(description <- blog.info.description) {
+            <div class="description">
+              @Html(description)
+            </div>
+          }
 
           <nav>
             <ul class="tagCloud">
             @for(tag <- blog.tagCloud) {
               <li class="tagCloud@tag._3">
-                <a href="@router.tag(tag._1)" title="blog entries: @tag._2">@tag._1</a></li>
+                <a href="@router.tag(tag._1)" title="@Messages("tags.blog.entries.count", tag._2)">@tag._1</a></li>
             }
             </ul>
 

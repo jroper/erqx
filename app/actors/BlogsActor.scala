@@ -2,7 +2,8 @@ package actors
 
 import akka.actor.{ActorRef, Props, Actor}
 import java.io.File
-import models.{GitConfig, BlogConfig}
+import models._
+import play.api.Play
 
 object BlogsActor {
   case object LoadBlogs
@@ -18,11 +19,21 @@ class BlogsActor extends Actor {
 
   def receive = {
     case LoadBlogs => {
-      val blogConfigs = List(
-        BlogConfig("default", GitConfig(new File(
-          Option(System.getProperty("blog.path")).getOrElse("/Users/jroper/tmp/theblog")
-        ), "master", None), "")
-      )
+      val blogConfigs = Play.current.configuration.getConfig("blogs").map { bcs =>
+        bcs.subKeys.flatMap { name =>
+          bcs.getConfig(name).flatMap { blogConfig =>
+            val path = blogConfig.getString("path").getOrElse("/blog")
+            blogConfig.getConfig("gitConfig").map { gc =>
+              BlogConfig(name, path, GitConfig(
+                new File(gc.getString("gitRepo").getOrElse(".")),
+                gc.getString("branch").getOrElse("published"),
+                gc.getString("remote"),
+                gc.getString("fetchKey")
+              ))
+            }
+          }
+        }
+      }.toList.flatten
 
       val blogs = blogConfigs.map { config =>
         config -> context.actorOf(Props(new BlogActor(config.gitConfig, config.path)), config.name)

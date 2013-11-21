@@ -1,0 +1,14 @@
+about.me=About me
+about=About
+
+tags.blog.entries.count=blog entries: {0}
+
+blog.posted.date=Posted {0,date,d MMMM yyyy}
+
+posts.by.year=All posts for {0,number,####}
+posts.by.month=All posts for {1} {0,number,####}
+posts.by.day=All posts for {2,number,#} {1} {0,number,####}
+posts.by.tag=All posts for tag {0}
+
+not.found=Page Not Found
+not.found.message=The page you are looking for could not be found

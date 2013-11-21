@@ -21,7 +21,7 @@ class BlogLoader(gitRepository: GitRepository) extends Actor {
         gitRepository.fetch
         val hash = gitRepository.currentHash
         if (hash != old.hash) {
-          sender ! new Blog(gitRepository.loadBlog(hash).toList, hash, old.path)
+          sender ! new Blog(gitRepository.loadBlog(hash).toList, hash, old.path, gitRepository.loadConfig(hash))
         } else {
           sender ! old
         }

@@ -7,12 +7,16 @@ import java.io.File
  */
 case class BlogConfig(
   name: String,
-  gitConfig: GitConfig,
-  path: String
+  path: String,
+  gitConfig: GitConfig
 )
 
+/**
+ * Git config
+ */
 case class GitConfig(
   gitRepo: File,
   branch: String,
-  remote: Option[String]
+  remote: Option[String],
+  fetchKey: Option[String]
 )

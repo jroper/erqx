@@ -1,6 +1,7 @@
-@(blog: Blog, router: BlogReverseRouter, title: Option[String], posts: List[(BlogPost, String)], previous: Option[Call], next: Option[Call])
+@(blog: Blog, router: BlogReverseRouter, title: Option[String], posts: List[(BlogPost, String)],
+    previous: Option[Call], next: Option[Call])(implicit req: RequestHeader)
 
-@main(blog, router, title) {
+@blog.info.theme.main(blog, router, title) {
 
   <nav>
     @if(previous.isDefined || next.isDefined) {
