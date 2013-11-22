@@ -13,7 +13,6 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.MimeTypes
 import play.api.i18n.Messages
-import java.io.File
 
 class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends Controller {
 

@@ -1,13 +1,24 @@
 @(blog: Blog, router: BlogReverseRouter, title: Option[String], posts: List[(BlogPost, String)],
     previous: Option[Call], next: Option[Call])(implicit req: RequestHeader)
 
+@nav(call: Option[Call], text: Html) = {
+  @call match {
+    case Some(u) => {
+      <li><a href="@u">@text</a></li>
+    }
+    case None => {
+      <li class="disabled"><a href="#" onclick="return false;">@text</a></li>
+    }
+  }
+}
+
 @blog.info.theme.main(blog, router, title) {
 
   <nav>
     @if(previous.isDefined || next.isDefined) {
       <ul class="pagination pagination-sm">
-        <li @if(previous.isEmpty) {class="disabled"}><a href="@previous.getOrElse("#")">&laquo;</a></li>
-        <li @if(next.isEmpty) {class="disabled"}><a href="@next.getOrElse("#")">&raquo;</a></li>
+        @nav(previous, Html("&laquo;"))
+        @nav(next, Html("&raquo;"))
       </ul>
     }
 
