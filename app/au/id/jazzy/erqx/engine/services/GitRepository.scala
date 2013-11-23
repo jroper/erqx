@@ -72,7 +72,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
   }
 
   def loadConfig(commitId: String) = {
-    val config = loadContent(commitId, pathPrefix.getOrElse("") + "_config.yml").map(Yaml.parse).getOrElse(Yaml.empty)
+    val config = loadContent(commitId, "_config.yml").map(Yaml.parse).getOrElse(Yaml.empty)
 
     val theme = config.getString("theme").flatMap { themeClassName =>
       allCatch.either {

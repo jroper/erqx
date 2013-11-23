@@ -10,11 +10,14 @@ author: Someone
 # The description
 description: |
     This is the description of the blog.  It can contain HTML, such as:
-    <ul>
+    <ul style="text-align: left">
         <li>Lists
         <li>Images
         <li>Anything else
     </ul>
+
+# The theme to use, if not specified uses the default theme.
+# theme: au.id.jazzy.erqx.engine.models.DefaultTheme$
 
 # Other arbitrary properties may go here that may be used by the theme.
 

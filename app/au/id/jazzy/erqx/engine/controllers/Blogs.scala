@@ -39,8 +39,8 @@ trait BlogsRouter extends Routes {
       val subPath = req.path.drop(path.length)
 
       subPath match {
-        case AssetsPattern(path) => Some(controllers.Assets.at("/public/au/id/jazzy/erqx/themes", path))
-        case WebJarAssetsPattern(path) => Some(controllers.WebJarAssets.at(path))
+        case AssetsPattern(p) => Some(controllers.Assets.at("/public/au/id/jazzy/erqx/themes", p))
+        case WebJarAssetsPattern(p) => Some(controllers.WebJarAssets.at(p))
         case _ => None
       }
     } else None
@@ -77,10 +77,10 @@ object BlogPaths {
   val FetchPattern = """/fetch/([^/]+)""".r
   val FetchLink = "/fetch/%s"
 
-  val AssetsPattern = "/_assets/.*".r
+  val AssetsPattern = "/_assets/(.*)".r
   val AssetsLink = "/_assets/%s"
 
-  val WebJarAssetsPattern = "/_webjars/.*".r
+  val WebJarAssetsPattern = "/_webjars/(.*)".r
   val WebJarAssetsLink = "/_webjars/%s"
 
   object ToInt {
@@ -190,9 +190,9 @@ class BlogReverseRouter(path: String, globalPath: String) {
 
   def asset(file: String) = Call("GET", path + "/" + file)
 
-  def globalAsset(file: String) = Call("GET", globalPath + "/" + file)
+  def globalAsset(file: String) = Call("GET", globalPath + AssetsLink.format(file))
 
-  def webJarAsset(file: String) = Call("GET", globalPath + "/" + file)
+  def webJarAsset(file: String) = Call("GET", globalPath + WebJarAssetsLink.format(file))
 
   private def withPaging(path: String, page: Page) = {
     val qs = (Nil ++

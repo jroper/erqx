@@ -7,6 +7,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.services.GitRepository
+import akka.actor.Status.Failure
+import scala.util.control.NonFatal
 
 object BlogActor {
   case class Fetch(key: String)
@@ -77,8 +79,11 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
       blog = newBlog
 
     case GetBlog =>
-
-      sender ! getBlog
+      try {
+        sender ! getBlog
+      } catch {
+        case NonFatal(e) => sender ! Failure(e)
+      }
 
     case loadContent: LoadContent =>
       fileLoaders.tell(loadContent, sender)

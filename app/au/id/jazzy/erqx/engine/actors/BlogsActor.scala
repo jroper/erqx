@@ -7,6 +7,8 @@ import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.actors.BlogActor.GetBlog
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
+import akka.actor.Status.Failure
 
 object BlogsActor {
   case class LoadBlogs(blogConfigs: List[BlogConfig])
@@ -32,6 +34,8 @@ class BlogsActor extends Actor {
         (actor ? GetBlog).map(_ => config -> actor)
       }).map { blogs =>
         theSender ! BlogsLoaded(blogs)
+      }.recover {
+        case NonFatal(e) => theSender ! Failure(e)
       }
     }
   }
