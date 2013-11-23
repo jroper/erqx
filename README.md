@@ -10,7 +10,7 @@ Currently it supports one backend - git.
 
 * Can be easily embedded into any Play application via a module include in the routes file.
 * Git backend with directory layout similar to Jekyll, YAML front matter on blog posts, etc.
-* Instant deploy from git hosting provides via commit hooks.
+* Instant deploy from git hosting provided via commit hooks.
 * Supports Markdown and HTML.
 * Markdown blog posts may include code snippets from files external files - this allows embedding code snippets that are compiled and/or tested.
 * Can host multiple blogs.
@@ -31,77 +31,77 @@ Currently it supports one backend - git.
 1. If you don't have an existing Play project that you want to embed it into, create a new one.
 2. Add the following to your `build.sbt` file:
 
-    resolvers += // TODO add resolver
+        resolvers += // TODO add resolver
 
-    libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0"
+        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0"
 
 3. Add the blog plugin to your `conf/play.plugins` file:
 
-    1100:au.id.jazzy.erqx.engine.BlogPlugin
+        1100:au.id.jazzy.erqx.engine.BlogPlugin
 
 4. Add a route to the blog router to your `conf/routes` file:
 
-    ->  /       au.id.jazzy.erqx.engine.controllers.BlogsRouter
+        ->  /       au.id.jazzy.erqx.engine.controllers.BlogsRouter
 
 5. Add the following configuration to your `application.conf`:
 
-    # The file loader dispatcher is used by the actor that loads files out of git.  All blocking git IO is done on these
-    # threads.
-    file-loader-dispatcher {
-      type = Dispatcher
-      executor = "thread-pool-executor"
-      thread-pool-executor {
-        core-pool-size-min = 10
-        core-pool-size-max = 10
-      }
-    }
-
-    # The blog loader dispatcher is used to do fetching and reindexing of the blog when it's updated.  There only needs to
-    # be one of these threads, all tasks done on this dispatcher are background tasks.
-    blog-loader-dispatcher {
-      type = Dispatcher
-      executor = "thread-pool-executor"
-      thread-pool-executor {
-        core-pool-size-min = 1
-        core-pool-size-max = 1
-      }
-    }
-
-    # The blogs
-    blogs {
-
-      # A blog with name default.  The name can be anything, it is only used internally.
-      default {
-
-        # The path of the blog.  This should not end in a slash.  This path will be relative to the path that the blogs
-        # router is deployed to.
-        path = "/blog"
-
-        # The git configuration
-        gitConfig {
-
-          # The repo must be a repo on the filesystem that has been cloned from somewhere.
-          gitRepo = "/path/to/some/repo"
-
-          # The path within the repo to serve the blog from.  Optional.
-          # path = "blog/"
-
-          # The branch to read the blog from.  Defaults to published.
-          # branch = "published"
-
-          # The name of the remote to fetch from.  If not specified, no fetch will be done when updating.
-          # remote = "origin"
-
-          # The fetch key.  Used to authenticate commit hooks from a remote git repository such as GitHub.
-          # If not specified, remote triggering of fetching is disabled.
-          # fetchKey = "somesecret"
-
-          # The update interval.  If specified, the blog will be fetched (if a remote is configured) and reindexed at this
-          # interval.  Reindexing is only done if the blog has actually changed.
-          updateInterval = 10 minutes
+        # The file loader dispatcher is used by the actor that loads files out of git.  All blocking git IO is done on these
+        # threads.
+        file-loader-dispatcher {
+          type = Dispatcher
+          executor = "thread-pool-executor"
+          thread-pool-executor {
+            core-pool-size-min = 10
+            core-pool-size-max = 10
+          }
         }
-      }
-    }
+
+        # The blog loader dispatcher is used to do fetching and reindexing of the blog when it's updated.  There only needs to
+        # be one of these threads, all tasks done on this dispatcher are background tasks.
+        blog-loader-dispatcher {
+          type = Dispatcher
+          executor = "thread-pool-executor"
+          thread-pool-executor {
+            core-pool-size-min = 1
+            core-pool-size-max = 1
+          }
+        }
+
+        # The blogs
+        blogs {
+
+          # A blog with name default.  The name can be anything, it is only used internally.
+          default {
+
+            # The path of the blog.  This should not end in a slash.  This path will be relative to the path that the blogs
+            # router is deployed to.
+            path = "/blog"
+
+            # The git configuration
+            gitConfig {
+
+              # The repo must be a repo on the filesystem that has been cloned from somewhere.
+              gitRepo = "/path/to/some/repo"
+
+              # The path within the repo to serve the blog from.  Optional.
+              # path = "blog/"
+
+              # The branch to read the blog from.  Defaults to published.
+              # branch = "published"
+
+              # The name of the remote to fetch from.  If not specified, no fetch will be done when updating.
+              # remote = "origin"
+
+              # The fetch key.  Used to authenticate commit hooks from a remote git repository such as GitHub.
+              # If not specified, remote triggering of fetching is disabled.
+              # fetchKey = "somesecret"
+
+              # The update interval.  If specified, the blog will be fetched (if a remote is configured) and reindexed at this
+              # interval.  Reindexing is only done if the blog has actually changed.
+              updateInterval = 10 minutes
+            }
+          }
+        }
 
 Now you're good to go!
 
