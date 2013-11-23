@@ -1,6 +1,12 @@
-name := "jazzy"
+name := "erqx-engine"
 
-version := "1.0-SNAPSHOT"
+organization := "au.id.jazzy.erqx"
+
+version := "1.0.0-SNAPSHOT"
+
+play.Project.playScalaSettings
+
+playPlugin := true
 
 // Production dependencies
 libraryDependencies ++= Seq(
@@ -22,4 +28,11 @@ libraryDependencies ++= Seq(
   "radeox" % "radeox" % "1.0-b2" % "test"
 )
 
-play.Project.playScalaSettings
+lazy val root = project in file(".")
+
+lazy val minimal = project.in(file("samples/minimal"))
+  .dependsOn(root).aggregate(root)
+
+lazy val customtheme = project.in(file("samples/customtheme"))
+  .dependsOn(root).aggregate(root)
+

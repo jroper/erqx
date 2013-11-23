@@ -1,0 +1,89 @@
+@(blog: au.id.jazzy.erqx.engine.models.Blog,
+    router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter,
+    title: Option[String])(content: Html)(implicit req: RequestHeader)
+
+<!DOCTYPE html>
+<html lang="@blog.info.language">
+  <head>
+    <base href="@blog.path/"/>
+
+    <title>@blog.info.title@title.map(" - " + _).getOrElse("")</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="alternate" type="application/atom+xml" title="Atom" href="@router.atom()" />
+
+    <link rel="stylesheet" href="@router.webJarAsset(WebJarAssets.locate("css/bootstrap.min.css"))">
+    <link rel="stylesheet" href="@router.globalAsset("jazzy/main.css")">
+
+  </head>
+  <body>
+
+    <div class="container">
+
+      <div class="row">
+
+        <input type="checkbox" class="slideout-check" id="slideout-check" />
+
+        <div class="main col-xs-12 col-sm-8">
+
+          <header>
+            <h1><a href="@router.index()">@blog.info.title</a></h1>
+
+            @for(subTitle <- blog.info.subTitle) {
+              <h2>@subTitle</h2>
+            }
+          </header>
+
+          <label for="slideout-check" class="slideout-tab">@Messages("about")</label>
+          @content
+        </div>
+        <div class="slideout col-sm-4">
+
+          <header>
+            <h2>@Messages("about.me")</h2>
+          </header>
+          @for(description <- blog.info.description) {
+            <div class="description">
+              @Html(description)
+            </div>
+          }
+
+          <nav>
+            <ul class="tagCloud">
+            @for(tag <- blog.tagCloud) {
+              <li class="tagCloud@tag._3">
+                <a href="@router.tag(tag._1)" title="@Messages("tags.blog.entries.count", tag._2)">@tag._1</a></li>
+            }
+            </ul>
+
+            <ul class="years row">
+            @for(year <- blog.years) {
+              <li class="col-xs-6">
+                <h4><a href="@router.year(year.year)">@year.year</a></h4>
+                <ul class="months">
+                @for(month <- year.months) {
+                  <li><a href="@router.month(month._2.year, month._2.month)">@month._2.name (@month._2.posts.size)</a></li>
+                }
+                </ul>
+              </li>
+            }
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<style type="text/css">
+  @@import "@router.webJarAsset(WebJarAssets.locate("prettify.css"))";
+</style>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("jquery.min.js"))"></script>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("prettify.js"))"></script>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("lang-scala.js"))"></script>
+<script type="text/javascript">
+$(function(){
+window.prettyPrint && prettyPrint()
+});
+</script>

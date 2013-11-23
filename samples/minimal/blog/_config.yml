@@ -1,0 +1,22 @@
+# The title
+title: My blog
+
+# Optional subtitle
+# subTitle: Just another ERQX blog
+
+# Author - used by atom feed
+author: Someone
+
+# The description
+description: |
+    This is the description of the blog.  It can contain HTML, such as:
+    <ul>
+        <li>Lists
+        <li>Images
+        <li>Anything else
+    </ul>
+
+# Other arbitrary properties may go here that may be used by the theme.
+
+# The default theme allows specifying a disqus id:
+# disqus_shortname: mydisqusblog

@@ -1,5 +1,0 @@
-@(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader)
-
-@blog.info.theme.main(blog, router, Some(Messages("not.found"))) {
-  @Messages("not.found.message")
-}
