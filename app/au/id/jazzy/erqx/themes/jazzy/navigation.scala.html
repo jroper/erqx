@@ -1,0 +1,22 @@
+@(blog: au.id.jazzy.erqx.engine.models.Blog,
+    router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter)(implicit req: RequestHeader)
+
+<ul class="tagCloud">
+@for(tag <- blog.tagCloud) {
+  <li class="tagCloud@tag._3">
+    <a href="@router.tag(tag._1)" title="@Messages("tags.blog.entries.count", tag._2)">@tag._1</a></li>
+}
+</ul>
+
+<ul class="years row">
+@for(year <- blog.years) {
+  <li class="col-xs-6">
+    <h4><a href="@router.year(year.year)">@year.year</a></h4>
+    <ul class="months">
+    @for(month <- year.months) {
+      <li><a href="@router.month(month._2.year, month._2.month)">@month._2.name (@month._2.posts.size)</a></li>
+    }
+    </ul>
+  </li>
+}
+</ul>

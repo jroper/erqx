@@ -1,0 +1,14 @@
+@(blog: au.id.jazzy.erqx.engine.models.Blog,
+    router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter)(implicit req: RequestHeader)
+
+<style type="text/css">
+  @@import "@router.webJarAsset(WebJarAssets.locate("prettify.css"))";
+</style>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("jquery.min.js"))"></script>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("prettify.js"))"></script>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("lang-scala.js"))"></script>
+<script type="text/javascript">
+$(function(){
+window.prettyPrint && prettyPrint()
+});
+</script>

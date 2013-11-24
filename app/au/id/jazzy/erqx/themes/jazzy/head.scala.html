@@ -1,0 +1,14 @@
+@(blog: au.id.jazzy.erqx.engine.models.Blog,
+  router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter,
+  title: Option[String])(implicit req: RequestHeader)
+
+<base href="@blog.path/"/>
+
+<title>@blog.info.title@title.map(" - " + _).getOrElse("")</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="alternate" type="application/atom+xml" title="Atom" href="@router.atom()" />
+
+<link rel="stylesheet" href="@router.webJarAsset(WebJarAssets.locate("css/bootstrap.min.css"))">
+<link rel="stylesheet" href="@router.globalAsset("jazzy/main.css")">

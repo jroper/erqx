@@ -5,17 +5,7 @@
 <!DOCTYPE html>
 <html lang="@blog.info.language">
   <head>
-    <base href="@blog.path/"/>
-
-    <title>@blog.info.title@title.map(" - " + _).getOrElse("")</title>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="alternate" type="application/atom+xml" title="Atom" href="@router.atom()" />
-
-    <link rel="stylesheet" href="@router.webJarAsset(WebJarAssets.locate("css/bootstrap.min.css"))">
-    <link rel="stylesheet" href="@router.globalAsset("jazzy/main.css")">
-
+    @blog.info.theme.head(blog, router, title)
   </head>
   <body>
 
@@ -50,40 +40,12 @@
           }
 
           <nav>
-            <ul class="tagCloud">
-            @for(tag <- blog.tagCloud) {
-              <li class="tagCloud@tag._3">
-                <a href="@router.tag(tag._1)" title="@Messages("tags.blog.entries.count", tag._2)">@tag._1</a></li>
-            }
-            </ul>
-
-            <ul class="years row">
-            @for(year <- blog.years) {
-              <li class="col-xs-6">
-                <h4><a href="@router.year(year.year)">@year.year</a></h4>
-                <ul class="months">
-                @for(month <- year.months) {
-                  <li><a href="@router.month(month._2.year, month._2.month)">@month._2.name (@month._2.posts.size)</a></li>
-                }
-                </ul>
-              </li>
-            }
-            </ul>
+            @blog.info.theme.navigation(blog, router)
           </nav>
         </div>
       </div>
     </div>
+
+    @blog.info.theme.footer(blog, router)
   </body>
 </html>
-
-<style type="text/css">
-  @@import "@router.webJarAsset(WebJarAssets.locate("prettify.css"))";
-</style>
-<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("jquery.min.js"))"></script>
-<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("prettify.js"))"></script>
-<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("lang-scala.js"))"></script>
-<script type="text/javascript">
-$(function(){
-window.prettyPrint && prettyPrint()
-});
-</script>

@@ -173,9 +173,13 @@ Within the `Code.scala` source file, the markdown formatter will look for a snip
 
 ## Custom themes
 
-Custom themes can be made by implementing `au.id.jazzy.erqx.engine.models.BlogTheme`.  The main methods on this to implement are `main`, `blogPost`, `blogPosts` and `notFound`, the default implementations of these use the default them.  Typically, these methods will simply delegate to Scala templates (as the default implementations do).
+Custom themes can be made by implementing `au.id.jazzy.erqx.engine.models.BlogTheme`.  The entry points to the theme are `blogPost`, `blogPosts` and `notFound`, the default implementations of these methods use the default theme.
 
-The `main` method provides the decorator that the default templates for the other 3 page types use.  If implementing them, it is not necessary to implement the `main` method.  However it is provided so that to change the overall style of the site, only the `main` method needs to be overridden.
+Typically, these methods will simply delegate to Scala templates (as the default implementations do).
+
+The other methods are used by the default theme.  The `main` method provides the decorator that the entry points use.
+
+The default theme main template also delegates to the `head`, `navigation` and `footer` templates.  For simple themes, it will often suffice to simply override some of these methods.
 
 ## Samples
 

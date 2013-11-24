@@ -20,7 +20,7 @@ trait BlogTheme {
   val name: String
 
   /**
-   * The main template
+   * The main template.  This is included by the default blogPost, blogPosts and notFound templates.
    */
   def main(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)(implicit req: RequestHeader): Html =
     au.id.jazzy.erqx.themes.jazzy.html.main(blog, router, title)(content)
@@ -45,6 +45,25 @@ trait BlogTheme {
   def notFound(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader): Html = {
     au.id.jazzy.erqx.themes.jazzy.html.pageNotFound(blog, router)
   }
+
+  /**
+   * The head section of the blog.  Used by the default main template.
+   */
+  def head(blog: Blog, router: BlogReverseRouter, title: Option[String])(implicit req: RequestHeader): Html =
+    au.id.jazzy.erqx.themes.jazzy.html.head(blog, router, title)
+
+  /**
+   * The navigation links in the blog.  Used by the default main template.
+   */
+  def navigation(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader): Html =
+    au.id.jazzy.erqx.themes.jazzy.html.navigation(blog, router)
+
+  /**
+   * The footer section of the blog.  Used by the default main template.
+   */
+  def footer(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader): Html =
+    au.id.jazzy.erqx.themes.jazzy.html.footer(blog, router)
+
 }
 
 /**
