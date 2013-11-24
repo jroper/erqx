@@ -8,7 +8,8 @@ import java.io.File
 case class BlogConfig(
   name: String,
   path: String,
-  gitConfig: GitConfig
+  gitConfig: GitConfig,
+  order: Int
 )
 
 /**

@@ -77,6 +77,10 @@ Currently it supports one backend - git.
             # router is deployed to.
             path = "/blog"
 
+            # The order that the blog is routed.  Important if you have blogs that are nested in other blogs paths.
+            # Defaults to 10.
+            # order = 10
+
             # The git configuration
             gitConfig {
 

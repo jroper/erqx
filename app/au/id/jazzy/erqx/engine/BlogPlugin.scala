@@ -30,16 +30,16 @@ class BlogPlugin(app: Application) extends Plugin {
               gc.getString("remote"),
               gc.getString("fetchKey"),
               gc.getMilliseconds("updateInterval")
-            ))
+            ), gc.getInt("order").getOrElse(10))
           }
         }
       }
-    }.toList.flatten
+    }.toList.flatten.sortBy(_.order)
 
     implicit val timeout = Timeout(1 minute)
     val BlogsLoaded(blogs) = Await.result(
       (system.actorOf(Props[BlogsActor], "blogs") ? LoadBlogs(blogConfigs)).mapTo[BlogsLoaded],
       1 minute)
-    BlogsRouter.startBlogs(blogs)
+    BlogsRouter.startBlogs(blogs.sortBy(_._1.order))
   }
 }
