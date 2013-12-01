@@ -40,6 +40,11 @@ class BlogPlugin(app: Application) extends Plugin {
     val BlogsLoaded(blogs) = Await.result(
       (system.actorOf(Props[BlogsActor], "blogs") ? LoadBlogs(blogConfigs)).mapTo[BlogsLoaded],
       1 minute)
+
     BlogsRouter.startBlogs(blogs.sortBy(_._1.order))
+
+    Logger.info("Started blogs: " + blogs.map { blog =>
+      blog._1.name + ":" + blog._1.path
+    }.mkString(", "))
   }
 }

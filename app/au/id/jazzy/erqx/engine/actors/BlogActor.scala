@@ -6,9 +6,9 @@ import java.io.InputStream
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import au.id.jazzy.erqx.engine.models._
-import au.id.jazzy.erqx.engine.services.GitRepository
 import akka.actor.Status.Failure
 import scala.util.control.NonFatal
+import au.id.jazzy.erqx.engine.services.git.{GitBlogRepository, GitRepository}
 
 object BlogActor {
   case class Fetch(key: String)
@@ -31,9 +31,10 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
   import BlogActor._
 
   private val gitRepository = new GitRepository(config.gitRepo, config.path, config.branch, config.remote)
+  private val blogRepository = new GitBlogRepository(gitRepository)
 
   private val blogLoader = context.actorOf(
-    Props(new BlogLoader(gitRepository))
+    Props(new BlogLoader(gitRepository, blogRepository))
       .withDispatcher("blog-loader-dispatcher"),
     "blogLoader"
   )
@@ -49,7 +50,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
   private def getBlog: Blog = {
     if (blog == null) {
       val hash = gitRepository.currentHash
-      blog = new Blog(gitRepository.loadBlog(hash).toList, hash, path, gitRepository.loadConfig(hash))
+      blog = new Blog(blogRepository.loadBlog(hash).toList, hash, path, blogRepository.loadConfig(hash))
     }
     blog
   }

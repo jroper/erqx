@@ -1,12 +1,12 @@
 package migration
 
 import java.io.File
-import models.{Yaml, BlogPost}
 import scala.xml.{PCData, Elem, XML}
 import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
 import java.util.Locale
 import scalax.file.Path
+import au.id.jazzy.erqx.engine.models.{Yaml, BlogPost}
 
 /**
  * Helper for migrating a pebble blog to this blog

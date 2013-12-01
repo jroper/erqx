@@ -1,4 +1,4 @@
-package au.id.jazzy.erqx.engine.services
+package au.id.jazzy.erqx.engine.services.git
 
 import java.io.{InputStream, File}
 import org.eclipse.jgit.lib.{ObjectId, Constants, RepositoryBuilder}
@@ -8,11 +8,6 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.revwalk.RevWalk
 import scalax.io.Resource
 import play.doc.{FileHandle, FileRepository}
-import play.api.i18n.Lang
-import play.api.{Logger, Play}
-import play.api.Play.current
-import scala.util.control.Exception._
-import au.id.jazzy.erqx.engine.models._
 
 class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, remote: Option[String]) {
 
@@ -25,10 +20,14 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
     git.fetch().setRemote(r).call()
   }
 
-  def currentHash: String = Option(repository.getRef(
-      remote.map("/refs/remotes/" + _ + "/").getOrElse("") + branch
-    )).map(_.getObjectId.name())
-    .getOrElse("")
+  def currentHash: String = {
+    val ref = remote.map("/refs/remotes/" + _ + "/").getOrElse("") + branch
+    Option(repository.getRef(ref))
+      .map(_.getObjectId.name())
+      .getOrElse {
+        throw new RuntimeException("Could not find ref \"" + ref + "\" in repository " + gitDir)
+      }
+  }
 
   /**
    * Load the file with the given path in the given ref
@@ -57,47 +56,6 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
     }
   }
 
-  def loadBlog(commitId: String): List[BlogPost] = {
-    (listAllFilesInPath(commitId, pathPrefix.getOrElse("") + "_posts").map { files =>
-      files.map { file =>
-        val path = "_posts/" + file
-        val Some((_, is)) = loadStream(commitId, path)
-        try {
-          MetaDataParser.parseFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1))
-        } finally {
-          is.close()
-        }
-      }
-    } getOrElse Nil).toList
-  }
-
-  def loadConfig(commitId: String) = {
-    val config = loadContent(commitId, "_config.yml").map(Yaml.parse).getOrElse(Yaml.empty)
-
-    val theme = config.getString("theme").flatMap { themeClassName =>
-      allCatch.either {
-        if (themeClassName.endsWith("$"))
-          Play.classloader.loadClass(themeClassName).getMethod("MODULE$").invoke(null).asInstanceOf[BlogTheme]
-        else
-          Play.classloader.loadClass(themeClassName).newInstance().asInstanceOf[BlogTheme]
-      } match {
-        case Right(t) => Some(t)
-        case Left(e) =>
-          Logger.warn("Unable to load theme", e)
-          None
-      }
-    } getOrElse DefaultTheme
-
-    BlogInfo(
-      title = config.getString("title").getOrElse("A blog with no name"),
-      subTitle = config.getString("subTitle"),
-      author = config.getString("author").getOrElse("No one"),
-      language = config.getString("language").getOrElse(Lang.defaultLang.code),
-      description = config.getString("description"),
-      theme = theme,
-      properties = config
-    )
-  }
 
   // A tree filter that finds files with the given name under the given base path
   private class FileWithNameFilter(basePath: String, name: String) extends TreeFilter {
@@ -133,12 +91,13 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
   }
 
   def listAllFilesInPath(commitId: String, path: String): Option[Seq[String]] = {
-    scanFiles(ObjectId.fromString(commitId), PathFilter.create(path)) { treeWalk =>
+    val prefixedPath = pathPrefix.getOrElse("") + path
+    scanFiles(ObjectId.fromString(commitId), PathFilter.create(prefixedPath)) { treeWalk =>
       def extract(list: List[String]): List[String] = {
         if (!treeWalk.next()) {
           list
         } else {
-          extract(treeWalk.getPathString.drop(path.length + 1) :: list)
+          extract(treeWalk.getPathString.drop(prefixedPath.length + 1) :: list)
         }
       }
       Some(extract(Nil))

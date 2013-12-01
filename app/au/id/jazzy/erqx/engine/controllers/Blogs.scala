@@ -118,7 +118,7 @@ class BlogRouter(controller: BlogController, path: String) extends Routes {
 
   def routes = Function.unlift { implicit req =>
     // Don't match more than we need to
-    if (req.path.startsWith(prefix)) {
+    if (req.path.startsWith(prefix) || req.path == path) {
 
       val subPath = req.path.drop(path.length)
 

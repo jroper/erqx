@@ -30,10 +30,11 @@
         </div>
         <div class="slideout col-sm-4">
 
-          <header>
-            <h2>@Messages("about.me")</h2>
-          </header>
           @for(description <- blog.info.description) {
+            <header>
+              <h2>@Messages("about")</h2>
+            </header>
+
             <div class="description">
               @Html(description)
             </div>
