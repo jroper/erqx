@@ -24,6 +24,7 @@ class BlogPlugin(app: Application) extends Plugin {
           val path = blogConfig.getString("path").getOrElse("/blog")
           blogConfig.getConfig("gitConfig").map { gc =>
             BlogConfig(name, path, GitConfig(
+              name,
               new File(gc.getString("gitRepo").getOrElse(".")),
               gc.getString("path"),
               gc.getString("branch").getOrElse("published"),

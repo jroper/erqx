@@ -50,7 +50,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
   private def getBlog: Blog = {
     if (blog == null) {
       val hash = gitRepository.currentHash
-      blog = new Blog(blogRepository.loadBlog(hash).toList, hash, path, blogRepository.loadConfig(hash))
+      blog = new Blog(config.id, blogRepository.loadBlog(hash).toList, hash, path, blogRepository.loadConfig(hash))
     }
     blog
   }

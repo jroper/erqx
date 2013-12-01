@@ -16,6 +16,7 @@ case class BlogConfig(
  * Git config
  */
 case class GitConfig(
+  id: String,
   gitRepo: File,
   path: Option[String],
   branch: String,

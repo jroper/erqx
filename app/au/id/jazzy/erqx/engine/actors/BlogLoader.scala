@@ -4,6 +4,7 @@ import akka.actor.Actor
 import scala.concurrent.blocking
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.services.git.{GitBlogRepository, GitRepository}
+import play.api.Logger
 
 object BlogLoader {
   case class ReloadBlog(old: Blog)
@@ -22,7 +23,8 @@ class BlogLoader(gitRepository: GitRepository, blogRepository: GitBlogRepository
         gitRepository.fetch
         val hash = gitRepository.currentHash
         if (hash != old.hash) {
-          sender ! new Blog(blogRepository.loadBlog(hash).toList, hash, old.path, blogRepository.loadConfig(hash))
+          Logger.info("Detected change on git repository for blog " + old.id + ", new hash is " + hash)
+          sender ! new Blog(old.id, blogRepository.loadBlog(hash).toList, hash, old.path, blogRepository.loadConfig(hash))
         } else {
           sender ! old
         }
