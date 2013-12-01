@@ -31,7 +31,7 @@ class BlogPlugin(app: Application) extends Plugin {
               gc.getString("remote"),
               gc.getString("fetchKey"),
               gc.getMilliseconds("updateInterval")
-            ), gc.getInt("order").getOrElse(10))
+            ), blogConfig.getInt("order").getOrElse(10))
           }
         }
       }
