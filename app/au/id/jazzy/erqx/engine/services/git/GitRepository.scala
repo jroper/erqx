@@ -21,7 +21,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
   }
 
   def currentHash: String = {
-    val ref = remote.map("/refs/remotes/" + _ + "/").getOrElse("") + branch
+    val ref = remote.map("refs/remotes/" + _ + "/").getOrElse("") + branch
     Option(repository.getRef(ref))
       .map(_.getObjectId.name())
       .getOrElse {
