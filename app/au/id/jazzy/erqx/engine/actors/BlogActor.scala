@@ -46,6 +46,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
     "fileLoaders")
 
   private var blog: Blog = _
+  private var updateJob: Option[Cancellable] = None
 
   private def getBlog: Blog = {
     if (blog == null) {
@@ -59,10 +60,17 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
   override def preStart() = {
     import context.dispatcher
 
-    config.updateInterval.foreach { interval =>
+    // If an update interval is configured, then schedule us to update on that interval
+    updateJob = config.updateInterval.map { interval =>
       context.system.scheduler.schedule(interval millis, interval millis) {
         self ! Update
       }
+    }
+
+    // If a remote is configured, then do an immediate update, this will trigger a fetch, and so potentially trigger
+    // an update
+    config.remote.foreach { _
+      self ! Update
     }
   }
 
@@ -94,5 +102,8 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
       fileLoaders.tell(renderPost, sender)
   }
 
-  override def postStop() = gitRepository.close
+  override def postStop() = {
+    gitRepository.close
+    updateJob.foreach(_.cancel())
+  }
 }

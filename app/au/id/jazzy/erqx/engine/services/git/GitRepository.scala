@@ -16,10 +16,16 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
 
   def close = repository.close()
 
+  /**
+   * Do a fetch if configured to do so
+   */
   def fetch: Unit = remote.foreach { r =>
     git.fetch().setRemote(r).call()
   }
 
+  /**
+   * Get the current hash for the repo
+   */
   def currentHash: String = {
     val ref = remote.map("refs/remotes/" + _ + "/").getOrElse("") + branch
     Option(repository.getRef(ref))
