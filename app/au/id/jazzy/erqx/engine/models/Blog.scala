@@ -4,6 +4,7 @@ import scala.collection.SortedMap
 import play.api.mvc.{Call, RequestHeader}
 import play.api.templates.Html
 import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
+import au.id.jazzy.erqx.engine.ErqxBuild
 
 /**
  * Information about a blog
@@ -17,7 +18,16 @@ case class BlogInfo(title: String,
                     properties: Yaml = Yaml.empty)
 
 trait BlogTheme {
+  /**
+   * Name of the theme.  For information purposes only
+   */
   val name: String
+
+  /**
+   * Hash of the theme.  Each time the theme is updated, this should change.  Typically, this will be a git hash or
+   * something similar.  This is used to compute some e-tags.
+   */
+  def hash: String
 
   /**
    * The main template.  This is included by the default blogPost, blogPosts and notFound templates.
@@ -38,6 +48,12 @@ trait BlogTheme {
   def blogPosts(blog: Blog, router: BlogReverseRouter, title: Option[String],
                posts: List[(BlogPost, String)], previous: Option[Call], next: Option[Call])(implicit req: RequestHeader): Html =
     au.id.jazzy.erqx.themes.jazzy.html.blogPosts(blog, router, title, posts, previous, next)
+
+  /**
+   * The template for rendering a page
+   */
+  def page(blog: Blog, router: BlogReverseRouter, page: Page, content: String)(implicit req: RequestHeader): Html =
+    main(blog, router, page.title)(Html(content))
 
   /**
    * The template for rendering the not found page
@@ -71,6 +87,7 @@ trait BlogTheme {
  */
 object DefaultTheme extends BlogTheme {
   val name = "jazzy"
+  val hash = ErqxBuild.hash
 }
 
 /**
@@ -81,12 +98,14 @@ object DefaultTheme extends BlogTheme {
  * @param hash The current hash of the repository at which point these blog posts were loaded from
  * @param path The path of the blog.  Does not end with "/", may be blank.
  */
-final class Blog(val id: String, blogPosts: List[BlogPost], val hash: String = "", val path: String, val info: BlogInfo) {
+final class Blog(val id: String, blogPosts: List[BlogPost], pages: List[Page], val hash: String = "", val path: String, val info: BlogInfo) {
 
   /**
    * Blog posts are always listed in reverse chronological order, so we sort them and then reverse them
    */
   private val sorted: List[BlogPost] = blogPosts.sorted.reverse
+
+  private val pagesByPermalink: Map[String, Page] = pages.map(page => page.permalink -> page).toMap
 
   /**
    * Blog posts by year, month then day
@@ -148,5 +167,10 @@ final class Blog(val id: String, blogPosts: List[BlogPost], val hash: String = "
    * Get the posts, sorted in reverse chronological order
    */
   def posts: List[BlogPost] = sorted
+
+  /**
+   * Get the page for the given permalink
+   */
+  def pageForPermalink(permalink: String): Option[Page] = pagesByPermalink.get(permalink)
 
 }

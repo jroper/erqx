@@ -13,6 +13,7 @@ import play.api.libs.MimeTypes
 import play.api.i18n.Messages
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.actors.BlogActor._
+import java.io.File
 
 class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends Controller {
 
@@ -55,19 +56,33 @@ class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends
     }
   }
 
-  def asset(path: String) = BlogAction.async { implicit req =>
+  def asset(p: String) = BlogAction.async { implicit req =>
+    val path = new File("/" + p).getCanonicalPath.drop(1)
     if (path.startsWith("_")) {
       sync(notFound(req.blog))
     } else {
-      (blogActor ? LoadStream(req.blog, path)).mapTo[Option[FileStream]].map {
+      // Try first for a static asset
+      (blogActor ? LoadStream(req.blog, path)).mapTo[Option[FileStream]].flatMap {
         case Some(FileStream(length, is, ec)) =>
           val result = SimpleResult(ResponseHeader(OK, Map(
             CONTENT_LENGTH -> length.toString
           )), Enumerator.fromStream(is)(ec))
 
-          MimeTypes.forFileName(path).map(mt => result.withHeaders(CONTENT_TYPE -> mt)).getOrElse(result)
+          sync(MimeTypes.forFileName(path).map(mt => result.withHeaders(CONTENT_TYPE -> mt)).getOrElse(result))
 
-        case None => notFound(req.blog)
+        case None => {
+          // Otherwise see if there's a dynamic page
+          req.blog.pageForPermalink(path) match {
+            case Some(page) =>
+              (blogActor ? RenderPage(req.blog, page)).mapTo[Option[String]].map {
+                case Some(rendered) =>
+                  Ok(req.blog.info.theme.page(req.blog, router, page, rendered))
+                case None => notFound(req.blog)
+              }
+            case None =>
+              sync(notFound(req.blog))
+          }
+        }
       }
     }
   }
@@ -122,7 +137,7 @@ class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends
         if (request.headers.get(IF_NONE_MATCH).exists(_ == (blog.hash + BlogController.startTime))) {
           sync(NotModified)
         } else {
-          block(new BlogRequest(request, blog)).map(_.withHeaders(ETAG -> (blog.hash + BlogController.startTime)))
+          block(new BlogRequest(request, blog)).map(_.withHeaders(ETAG -> (blog.hash + blog.info.theme.hash)))
         }
       }
     }

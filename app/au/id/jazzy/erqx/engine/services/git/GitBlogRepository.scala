@@ -13,18 +13,36 @@ import au.id.jazzy.erqx.engine.models.BlogInfo
  */
 class GitBlogRepository(gitRepo: GitRepository) {
 
-  def loadBlog(commitId: String): List[BlogPost] = {
+  def loadBlog(id: String, path: String, commitId: String): Blog = {
+    new Blog(id, loadBlogPosts(commitId).toList, loadPages(commitId), commitId, path, loadConfig(commitId))
+  }
+
+  def loadBlogPosts(commitId: String): List[BlogPost] = {
     (gitRepo.listAllFilesInPath(commitId, "_posts").map { files =>
       files.map { file =>
         val path = "_posts/" + file
         val Some((_, is)) = gitRepo.loadStream(commitId, path)
         try {
-          MetaDataParser.parseFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1))
+          MetaDataParser.parsePostFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1))
         } finally {
           is.close()
         }
       }
     } getOrElse Nil).toList
+  }
+  
+  def loadPages(commitId: String): List[Page] = {
+    (gitRepo.listAllFilesInPath(commitId, "_pages").map { files =>
+      files.map { file =>
+        val path = "_pages/" + file
+        val Some((_, is)) = gitRepo.loadStream(commitId, path)
+        try {
+          MetaDataParser.parsePageFrontMatter(is, path, file)
+        } finally {
+          is.close()
+        }
+      }
+    } getOrElse Nil).toList    
   }
 
   def loadConfig(commitId: String) = {

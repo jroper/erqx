@@ -17,13 +17,13 @@ Currently it supports one backend - git.
 * Completely themeable.
 * Default theme uses responsive layout and Disqus for comments.
 * Support for many common blog features including tags, archive navigation, ATOM feeds.
+* Renderable static pages.
 
 ## Planned features
 
 * [prismic.io](http://prismic.io) backend.
 * Virtual hosting.
 * Pluggable blog post formats.
-* Renderable static pages.
 * Multiple language support.
 
 ## Installation
@@ -111,7 +111,9 @@ Now you're good to go!
 
 ## Blog repo layout
 
-You can place posts into `_posts` directory in the repo, all posts will be picked up from there.  Blog posts should have a name in the format `year-month-day-permalink-title.format`, for example, `2013-11-23-my-first-post.md`.  Allowed formats are `md` and `html`.
+You can place posts into a `_posts` directory in the repo, all posts will be picked up from there.  Blog posts should have a name in the format `year-month-day-permalink-title.format`, for example, `2013-11-23-my-first-post.md`.  Allowed formats are `md` and `html`.
+
+Similarly, you can also place static pages into a `_pages` directory in the repo, and all pages will be picked up from there.
 
 A file called `_config.yml` should be placed in the root directory of the repo.
 
@@ -175,9 +177,22 @@ Within the `Code.scala` source file, the markdown formatter will look for a snip
     val four = 1 + 3
     //#some-label
 
+## Pages
+
+Pages may contain a YAML front matter, containing meta data about the page:
+
+    ---
+    # The title of the page. Optional.
+    title: Some page title
+
+    # The permalink for the page. Optional. If not specified, will use the path of the file relative to the _pages
+    # directory, with the format extension replaced with .html
+    # permalink: path/to/page.html
+    ---
+
 ## Custom themes
 
-Custom themes can be made by implementing `au.id.jazzy.erqx.engine.models.BlogTheme`.  The entry points to the theme are `blogPost`, `blogPosts` and `notFound`, the default implementations of these methods use the default theme.
+Custom themes can be made by implementing `au.id.jazzy.erqx.engine.models.BlogTheme`.  The entry points to the theme are `blogPost`, `blogPosts`, `page` and `notFound`, the default implementations of these methods use the default theme.
 
 Typically, these methods will simply delegate to Scala templates (as the default implementations do).
 

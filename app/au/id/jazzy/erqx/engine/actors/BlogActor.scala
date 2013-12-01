@@ -23,6 +23,8 @@ object BlogActor {
   case class LoadStream(blog: Blog, file: String)
   case class RenderPost(blog: Blog, post: BlogPost, absoluteUri: Option[String] = None)
   case class FileStream(length: Long, is: InputStream, ec: ExecutionContext)
+
+  case class RenderPage(blog: Blog, page: Page)
 }
 
 class BlogActor(config: GitConfig, path: String) extends Actor {
@@ -51,7 +53,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
   private def getBlog: Blog = {
     if (blog == null) {
       val hash = gitRepository.currentHash
-      blog = new Blog(config.id, blogRepository.loadBlog(hash).toList, hash, path, blogRepository.loadConfig(hash))
+      blog = blogRepository.loadBlog(config.id, path, hash)
     }
     blog
   }
@@ -69,7 +71,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
 
     // If a remote is configured, then do an immediate update, this will trigger a fetch, and so potentially trigger
     // an update
-    config.remote.foreach { _
+    config.remote.foreach { _ =>
       self ! Update
     }
   }
@@ -100,6 +102,8 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
       fileLoaders.tell(loadStream, sender)
     case renderPost: RenderPost =>
       fileLoaders.tell(renderPost, sender)
+    case renderPage: RenderPage =>
+      fileLoaders.tell(renderPage, sender)
   }
 
   override def postStop() = {

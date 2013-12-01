@@ -28,6 +28,20 @@ libraryDependencies ++= Seq(
   "radeox" % "radeox" % "1.0-b2" % "test"
 )
 
+// Version file
+sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
+  val hash = ("git rev-parse HEAD" !!).trim
+  val file = dir / "au" / "id" / "jazzy" / "erqx" / "engine" / "ErqxBuild.scala"
+  IO.write(file,
+    """ |package au.id.jazzy.erqx.engine
+        |
+        |object ErqxBuild {
+        |  val hash = "%s"
+        |}
+      """.stripMargin.format(hash))
+  Seq(file)
+}
+
 lazy val root = project in file(".")
 
 lazy val minimal = project.in(file("samples/minimal"))

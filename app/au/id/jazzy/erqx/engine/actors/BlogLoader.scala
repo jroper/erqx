@@ -24,7 +24,7 @@ class BlogLoader(gitRepository: GitRepository, blogRepository: GitBlogRepository
         val hash = gitRepository.currentHash
         if (hash != old.hash) {
           Logger.info("Detected change on git repository for blog " + old.id + ", new hash is " + hash)
-          sender ! new Blog(old.id, blogRepository.loadBlog(hash).toList, hash, old.path, blogRepository.loadConfig(hash))
+          sender ! blogRepository.loadBlog(old.id, old.path, hash)
         } else {
           sender ! old
         }
