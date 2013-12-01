@@ -20,7 +20,8 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.webjars" %% "webjars-play" % "2.2.0",
   "org.webjars" % "bootstrap" % "3.0.2",
-  "org.webjars" % "prettify" % "4-Mar-2013"
+  "org.webjars" % "prettify" % "4-Mar-2013",
+  "org.webjars" % "retinajs" % "0.0.2"
 )
 
 // Test dependencies

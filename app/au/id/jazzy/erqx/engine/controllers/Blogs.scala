@@ -120,9 +120,13 @@ class BlogRouter(controller: BlogController, path: String) extends Routes {
     // Don't match more than we need to
     if (req.path.startsWith(prefix) || req.path == path) {
 
+      // If it's a HEAD request, do a GET instead
+      val isHead = req.method == "HEAD"
+      val method = if (isHead) "GET" else req.method
+
       val subPath = req.path.drop(path.length)
 
-      (req.method, subPath) match {
+      val action = (method, subPath) match {
         // Index
         case ("GET", "/" | "") =>
           Some(controller.index(getPage))
@@ -156,6 +160,13 @@ class BlogRouter(controller: BlogController, path: String) extends Routes {
           Some(controller.asset(path.drop(1)))
 
         case _ => None
+      }
+
+      // Wrap in the head action if it was a head request
+      if (isHead) {
+        action.map(new HeadAction(_))
+      } else {
+        action
       }
     } else {
       None
