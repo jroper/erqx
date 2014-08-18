@@ -8,22 +8,27 @@ import play.api.{Logger, Play}
 import play.api.i18n.Lang
 import au.id.jazzy.erqx.engine.models.BlogInfo
 
+import scala.util.control.NonFatal
+
 /**
  * Loads the repository from git
  */
 class GitBlogRepository(gitRepo: GitRepository) {
 
   def loadBlog(id: String, path: String, commitId: String): Blog = {
-    new Blog(id, loadBlogPosts(commitId).toList, loadPages(commitId), commitId, path, loadConfig(commitId))
+    new Blog(id, loadBlogPosts(id, commitId).toList, loadPages(commitId), commitId, path, loadConfig(commitId))
   }
 
-  def loadBlogPosts(commitId: String): List[BlogPost] = {
+  def loadBlogPosts(id: String, commitId: String): List[BlogPost] = {
     (gitRepo.listAllFilesInPath(commitId, "_posts").map { files =>
       files.map { file =>
         val path = "_posts/" + file
         val Some((_, is)) = gitRepo.loadStream(commitId, path)
         try {
           MetaDataParser.parsePostFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1))
+        } catch {
+          case NonFatal(e) =>
+            throw new RuntimeException(s"Error loading post '$path' from blog '$id'")
         } finally {
           is.close()
         }
