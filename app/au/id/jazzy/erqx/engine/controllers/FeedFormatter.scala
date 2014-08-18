@@ -15,7 +15,7 @@ object FeedFormatter {
       <link rel="self" type="application/atom+xml" href={router.atom().absoluteURL()} />
       {blog.info.subTitle.map { subTitle =>
         <subtitle>{subTitle}</subtitle>
-      }}
+      }.toSeq}
       <id>{router.index().absoluteURL()}</id>
       <rights>{blog.info.author}</rights>
       <updated>{blogUpdate}</updated>
