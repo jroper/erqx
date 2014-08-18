@@ -2,15 +2,15 @@
     router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter)(implicit req: RequestHeader)
 
 <style type="text/css">
-  @@import "@router.webJarAsset(WebJarAssets.locate("prettify.css"))";
+  @@import "@router.webJarAsset("prettify/prettify.css")";
 </style>
-<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("jquery.min.js"))"></script>
-<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("prettify.js"))"></script>
-<script type="text/javascript" charset="utf-8" src="@router.webJarAsset(WebJarAssets.locate("lang-scala.js"))"></script>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset("jquery/jquery.js")"></script>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset("prettify/prettify.js")"></script>
+<script type="text/javascript" charset="utf-8" src="@router.webJarAsset("prettify/lang-scala.js")"></script>
 <script type="text/javascript">
 $(function(){
 window.prettyPrint && prettyPrint()
 });
 </script>
 
-<script type="text/javascript" src="@router.webJarAsset(WebJarAssets.locate("retina.js"))"></script>
+<script type="text/javascript" src="@router.webJarAsset("retinajs/retina.js")"></script>

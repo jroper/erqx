@@ -64,7 +64,7 @@ class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends
       // Try first for a static asset
       (blogActor ? LoadStream(req.blog, path)).mapTo[Option[FileStream]].flatMap {
         case Some(FileStream(length, is, ec)) =>
-          val result = SimpleResult(ResponseHeader(OK, Map(
+          val result = Result(ResponseHeader(OK, Map(
             CONTENT_LENGTH -> length.toString
           )), Enumerator.fromStream(is)(ec))
 
@@ -132,12 +132,12 @@ class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends
    */
   object BlogAction extends ActionBuilder[BlogRequest] {
 
-    protected def invokeBlock[A](request: Request[A], block: (BlogRequest[A]) => Future[SimpleResult]) = {
+    def invokeBlock[A](request: Request[A], block: (BlogRequest[A]) => Future[Result]) = {
       (blogActor ? GetBlog).mapTo[Blog].flatMap { blog =>
         // etag - take 7 characters of the blog hash and 7 characters of the theme hash. So if either the theme
         // changes, or the blog changes, everything served by the blog will expire.
         val etag = blog.hash.take(7) + blog.info.theme.hash.take(7)
-        if (request.headers.get(IF_NONE_MATCH).exists(_ == etag)) {
+        if (request.headers.get(IF_NONE_MATCH).contains(etag)) {
           sync(NotModified)
         } else {
           block(new BlogRequest(request, blog)).map(_.withHeaders(ETAG -> etag))

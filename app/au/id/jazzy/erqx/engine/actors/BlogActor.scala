@@ -43,7 +43,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
 
   private val fileLoaders = context.actorOf(
     Props(new FileLoader(gitRepository))
-      .withRouter(SmallestMailboxRouter(nrOfInstances = 10))
+      .withRouter(SmallestMailboxPool(nrOfInstances = 10))
       .withDispatcher("file-loader-dispatcher"),
     "fileLoaders")
 
@@ -78,7 +78,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
 
   def receive = {
     case Fetch(key) =>
-      if (config.fetchKey.exists(_ == key)) {
+      if (config.fetchKey.contains(key)) {
         blogLoader ! ReloadBlog(getBlog)
         sender ! FetchAccepted
       } else {
@@ -97,17 +97,17 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
       }
 
     case loadContent: LoadContent =>
-      fileLoaders.tell(loadContent, sender)
+      fileLoaders.tell(loadContent, sender())
     case loadStream: LoadStream =>
-      fileLoaders.tell(loadStream, sender)
+      fileLoaders.tell(loadStream, sender())
     case renderPost: RenderPost =>
-      fileLoaders.tell(renderPost, sender)
+      fileLoaders.tell(renderPost, sender())
     case renderPage: RenderPage =>
-      fileLoaders.tell(renderPage, sender)
+      fileLoaders.tell(renderPage, sender())
   }
 
   override def postStop() = {
-    gitRepository.close
+    gitRepository.close()
     updateJob.foreach(_.cancel())
   }
 }

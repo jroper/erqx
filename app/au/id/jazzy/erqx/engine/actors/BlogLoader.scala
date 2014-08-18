@@ -20,7 +20,7 @@ class BlogLoader(gitRepository: GitRepository, blogRepository: GitBlogRepository
   def receive = {
     case ReloadBlog(old) =>
       blocking {
-        gitRepository.fetch
+        gitRepository.fetch()
         val hash = gitRepository.currentHash
         if (hash != old.hash) {
           Logger.info("Detected change on git repository for blog " + old.id + ", new hash is " + hash)

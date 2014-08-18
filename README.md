@@ -33,7 +33,10 @@ Currently it supports one backend - git.
 
         resolvers += // TODO add resolver
 
-        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0"
+        libraryDependencies += Seq(
+          "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0",
+          "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0" % "assets->runtime"
+        )
 
 3. Add the blog plugin to your `conf/play.plugins` file:
 

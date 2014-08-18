@@ -1,6 +1,6 @@
 package au.id.jazzy.erqx.engine.controllers
 
-import play.core.Router.Routes
+import play.core.Router.{ReverseRouteContext, Routes}
 import play.api.mvc._
 import akka.actor.ActorRef
 import play.utils.UriEncoding
@@ -39,8 +39,7 @@ trait BlogsRouter extends Routes {
       val subPath = req.path.drop(path.length)
 
       subPath match {
-        case AssetsPattern(p) => Some(controllers.Assets.at("/public/au/id/jazzy/erqx/themes", p))
-        case WebJarAssetsPattern(p) => Some(controllers.WebJarAssets.at(p))
+        case WebJarAssetsPattern(p) => Some(controllers.Assets.versioned("/public/lib", p))
         case _ => None
       }
     } else None
@@ -77,11 +76,8 @@ object BlogPaths {
   val FetchPattern = """/fetch/([^/]+)""".r
   val FetchLink = "/fetch/%s"
 
-  val AssetsPattern = "/_assets/(.*)".r
-  val AssetsLink = "/_assets/%s"
-
-  val WebJarAssetsPattern = "/_webjars/(.*)".r
-  val WebJarAssetsLink = "/_webjars/%s"
+  val WebJarAssetsPattern = "/_assets/lib/(.*)".r
+  val WebJarAssetsLink = "/_assets/lib/%s"
 
   object ToInt {
     def unapply(s: String): Option[Int] = try {
@@ -181,6 +177,7 @@ class BlogRouter(controller: BlogController, path: String) extends Routes {
 
 class BlogReverseRouter(path: String, globalPath: String) {
   import BlogPaths._
+  import controllers.Assets
 
   def index(page: Page = defaultPage): Call = Call("GET", withPaging(path + "/", page))
 
@@ -201,9 +198,10 @@ class BlogReverseRouter(path: String, globalPath: String) {
 
   def asset(file: String) = Call("GET", path + "/" + file)
 
-  def globalAsset(file: String) = Call("GET", globalPath + AssetsLink.format(file))
-
-  def webJarAsset(file: String) = Call("GET", globalPath + WebJarAssetsLink.format(file))
+  def webJarAsset(file: String) =
+    Call("GET", globalPath + WebJarAssetsLink.format(Assets.Asset.assetPathBindable(
+      ReverseRouteContext(Map("path" -> "/public/lib"))
+    ).unbind("file", Assets.Asset(file))))
 
   private def withPaging(path: String, page: Page) = {
     val qs = (Nil ++

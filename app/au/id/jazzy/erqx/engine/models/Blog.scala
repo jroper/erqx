@@ -2,7 +2,7 @@ package au.id.jazzy.erqx.engine.models
 
 import scala.collection.SortedMap
 import play.api.mvc.{Call, RequestHeader}
-import play.api.templates.Html
+import play.twirl.api.Html
 import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
 import au.id.jazzy.erqx.engine.ErqxBuild
 

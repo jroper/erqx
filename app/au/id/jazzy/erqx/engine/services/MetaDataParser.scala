@@ -1,7 +1,7 @@
 package au.id.jazzy.erqx.engine.services
 
 import java.io.InputStream
-import scalax.io.Resource
+import scala.io.Source
 import play.api.Logger
 import org.joda.time.DateTime
 import au.id.jazzy.erqx.engine.models._
@@ -92,7 +92,7 @@ object MetaDataParser {
   }
 
   def extractFrontMatter(stream: InputStream): Yaml = {
-    val lines = Resource.fromInputStream(stream).lines().toIterator.map(_.trim())
+    val lines = Source.fromInputStream(stream).getLines().map(_.trim())
       .dropWhile(_.isEmpty)
 
     // Extract attributes from the front matter

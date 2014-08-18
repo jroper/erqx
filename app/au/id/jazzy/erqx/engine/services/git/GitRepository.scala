@@ -6,20 +6,21 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.treewalk.filter.{PathSuffixFilter, TreeFilter, PathFilter}
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.revwalk.RevWalk
-import scalax.io.Resource
 import play.doc.{FileHandle, FileRepository}
+
+import scala.io.Source
 
 class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, remote: Option[String]) {
 
   private val repository = new RepositoryBuilder().setGitDir(new File(gitDir, ".git")).build()
   private val git = new Git(repository)
 
-  def close = repository.close()
+  def close() = repository.close()
 
   /**
    * Do a fetch if configured to do so
    */
-  def fetch: Unit = remote.foreach { r =>
+  def fetch(): Unit = remote.foreach { r =>
     git.fetch().setRemote(r).call()
   }
 
@@ -55,7 +56,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
   def loadContent(commitId: String, path: String): Option[String] = {
     loadStream(commitId, path).map {
       case (length, is) => try {
-        Resource.fromInputStream(is).string
+        Source.fromInputStream(is).mkString
       } finally {
         is.close()
       }

@@ -1,11 +1,10 @@
 package migration
 
-import java.io.File
+import java.io.{FileWriter, File}
 import scala.xml.{PCData, Elem, XML}
 import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
 import java.util.Locale
-import scalax.file.Path
 import au.id.jazzy.erqx.engine.models.{Yaml, BlogPost}
 
 /**
@@ -18,10 +17,10 @@ object MigratePebbleBlog {
 
     val posts = postFiles.map(parsePost).flatMap(_.toSeq)
 
-    val to = Path(dest)
-    val postsDir = to / "_posts"
+    val to = dest
+    val postsDir = new File(dest, "_posts")
 
-    postsDir.doCreateDirectory()
+    postsDir.mkdirs()
 
     posts.foreach { post =>
       println("Migrating blog post: " + post._1.toPermalink + "...")
@@ -37,15 +36,15 @@ object MigratePebbleBlog {
       */
 
       val body = formatPost(post._1, post._2)
-      val postFile = postsDir / post._1.path
-      postFile.write(body)
+      val postFile = new File(postsDir, post._1.path)
+      writeFile(postFile, body)
       println("Wrote: " + postFile)
       println()
     }
 
     println("Creating WXR...")
     val xwr = generateXwr(posts, baseUrl)
-    (to / "disqus.xwr").write(xwr.buildString(true))
+    writeFile(new File(to, "disqus.wxr"), xwr.buildString(true))
     println("Wrote XWR file.")
     println()
 
@@ -155,7 +154,7 @@ object MigratePebbleBlog {
         val permalinkTitle = toPermalinkTitle(title)
         val id = "%04d-%02d-%02d-%s".format(date.year.get, date.monthOfYear.get, date.dayOfMonth.get, permalinkTitle)
         val path = id + ".html"
-        val tags = tagsStr.split(" +").map(_.replace('+', ' ')).toSet
+        val tags = tagsStr.split(" +").map(_.replace('+', ' ').trim()).toSet.filter(_.nonEmpty)
 
         val post = BlogPost(id, path, title, date, permalinkTitle, "html", tags, Yaml.empty)
 
@@ -244,4 +243,13 @@ object MigratePebbleBlog {
 
   val PebbleDateFormat = DateTimeFormat.forPattern("dd MMM yyyy HH:mm:ss:SSS Z")
   val WpDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+
+  def writeFile(file: File, content: String) = {
+    val writer = new FileWriter(file)
+    try {
+      writer.write(content)
+    } finally {
+      writer.close()
+    }
+  }
 }
