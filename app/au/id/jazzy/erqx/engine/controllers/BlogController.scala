@@ -137,7 +137,7 @@ class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends
         // etag - take 7 characters of the blog hash and 7 characters of the theme hash. So if either the theme
         // changes, or the blog changes, everything served by the blog will expire.
         val etag = blog.hash.take(7) + blog.info.theme.hash.take(7)
-        if (request.headers.get(IF_NONE_MATCH).contains(etag)) {
+        if (request.headers.get(IF_NONE_MATCH).exists(_ == etag)) {
           sync(NotModified)
         } else {
           block(new BlogRequest(request, blog)).map(_.withHeaders(ETAG -> etag))

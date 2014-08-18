@@ -6,7 +6,11 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.2"
 
+crossScalaVersions := Seq("2.11.2", "2.10.4")
+
 releaseSettings
+
+ReleaseKeys.crossBuild := true
 
 publishTo := {
   val localRepo = new File("../jroper.github.io/").getAbsoluteFile

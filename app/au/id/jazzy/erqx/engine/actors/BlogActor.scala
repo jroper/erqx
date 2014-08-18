@@ -78,7 +78,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
 
   def receive = {
     case Fetch(key) =>
-      if (config.fetchKey.contains(key)) {
+      if (config.fetchKey.exists(_ == key)) {
         blogLoader ! ReloadBlog(getBlog)
         sender ! FetchAccepted
       } else {

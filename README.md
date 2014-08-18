@@ -206,3 +206,8 @@ The default theme main template also delegates to the `head`, `navigation` and `
 ## Samples
 
 Sample blogs can be found in the `samples` directory of this repository.  To run them, clone this repository, and then from the root directory, run `play`, then from the console run `project <sampleprojectname>` to swith to the sample project, then run `run`.
+
+## Example sites using erqx
+
+* [all that jazz](http://jazzy.id.au)
+* [RopedIn](http://jazzy.id.au/ropedin)
