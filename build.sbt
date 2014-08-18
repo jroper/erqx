@@ -2,11 +2,19 @@ name := "erqx-engine"
 
 organization := "au.id.jazzy.erqx"
 
-version := "1.0.0-SNAPSHOT"
-
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.2"
+
+releaseSettings
+
+publishTo := {
+  val localRepo = new File("../jroper.github.io/").getAbsoluteFile
+  if (version.value.trim.endsWith("SNAPSHOT")) 
+    Some(Resolver.file("snapshots", localRepo / "snapshots"))
+  else
+    Some(Resolver.file("releases", localRepo / "releases"))
+}
 
 // Production dependencies
 libraryDependencies ++= Seq(
