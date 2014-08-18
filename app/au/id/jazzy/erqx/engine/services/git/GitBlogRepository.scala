@@ -56,7 +56,7 @@ class GitBlogRepository(gitRepo: GitRepository) {
     val theme = config.getString("theme").flatMap { themeClassName =>
       allCatch.either {
         if (themeClassName.endsWith("$"))
-          Play.classloader.loadClass(themeClassName).getMethod("MODULE$").invoke(null).asInstanceOf[BlogTheme]
+          Play.classloader.loadClass(themeClassName).getDeclaredField("MODULE$").get(null).asInstanceOf[BlogTheme]
         else
           Play.classloader.loadClass(themeClassName).newInstance().asInstanceOf[BlogTheme]
       } match {
