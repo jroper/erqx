@@ -31,44 +31,15 @@ Currently it supports one backend - git.
 1. If you don't have an existing Play project that you want to embed it into, create a new one.
 2. Add the following to your `build.sbt` file:
 
-        resolvers += // TODO add resolver
+        resolvers += "ERQX Releases" at "https://jroper.github.io/releases"
 
-        libraryDependencies += Seq(
-          "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0",
-          "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0" % "assets->runtime"
-        )
+        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0"
 
-3. Add the blog plugin to your `conf/play.plugins` file:
-
-        1100:au.id.jazzy.erqx.engine.BlogPlugin
-
-4. Add a route to the blog router to your `conf/routes` file:
+3. Add a route to the blog router to your `conf/routes` file:
 
         ->  /       au.id.jazzy.erqx.engine.controllers.BlogsRouter
 
-5. Add the following configuration to your `application.conf`:
-
-        # The file loader dispatcher is used by the actor that loads files out of git.  All blocking git IO is done on these
-        # threads.
-        file-loader-dispatcher {
-          type = Dispatcher
-          executor = "thread-pool-executor"
-          thread-pool-executor {
-            core-pool-size-min = 10
-            core-pool-size-max = 10
-          }
-        }
-
-        # The blog loader dispatcher is used to do fetching and reindexing of the blog when it's updated.  There only needs to
-        # be one of these threads, all tasks done on this dispatcher are background tasks.
-        blog-loader-dispatcher {
-          type = Dispatcher
-          executor = "thread-pool-executor"
-          thread-pool-executor {
-            core-pool-size-min = 1
-            core-pool-size-max = 1
-          }
-        }
+4. Add the following configuration to your `application.conf`:
 
         # The blogs
         blogs {
@@ -135,7 +106,7 @@ The config file contains the main properties for the blog post.  For example:
     # Author - used by atom feed
     author: Someone
 
-    # The description
+    # The description - optional, may contain HTML.
     description: |
         This is the description of the blog.  It can contain HTML, such as:
         <ul style="text-align: left">
@@ -143,6 +114,10 @@ The config file contains the main properties for the blog post.  For example:
             <li>Images
             <li>Anything else
         </ul>
+
+    # The footer - optional, may contain HTML.
+    footer: |
+        Copyright Someone. All rights reserved.
 
     # The theme to use, if not specified uses the default theme.
     # theme: au.id.jazzy.erqx.engine.models.DefaultTheme$

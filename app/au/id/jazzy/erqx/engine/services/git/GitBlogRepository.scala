@@ -16,7 +16,7 @@ import scala.util.control.NonFatal
 class GitBlogRepository(gitRepo: GitRepository) {
 
   def loadBlog(id: String, path: String, commitId: String): Blog = {
-    new Blog(id, loadBlogPosts(id, commitId).toList, loadPages(commitId), commitId, path, loadConfig(commitId))
+    new Blog(id, loadBlogPosts(id, commitId).toList, loadPages(commitId), commitId, path, loadInfo(commitId))
   }
 
   def loadBlogPosts(id: String, commitId: String): List[BlogPost] = {
@@ -50,7 +50,7 @@ class GitBlogRepository(gitRepo: GitRepository) {
     } getOrElse Nil).toList    
   }
 
-  def loadConfig(commitId: String) = {
+  def loadInfo(commitId: String) = {
     val config = gitRepo.loadContent(commitId, "_config.yml").map(Yaml.parse).getOrElse(Yaml.empty)
 
     val theme = config.getString("theme").flatMap { themeClassName =>
@@ -73,6 +73,7 @@ class GitBlogRepository(gitRepo: GitRepository) {
       author = config.getString("author").getOrElse("No one"),
       language = config.getString("language").getOrElse(Lang.defaultLang.code),
       description = config.getString("description"),
+      footer = config.getString("footer"),
       theme = theme,
       properties = config
     )

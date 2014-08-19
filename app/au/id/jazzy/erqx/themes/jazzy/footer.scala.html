@@ -1,6 +1,17 @@
 @(blog: au.id.jazzy.erqx.engine.models.Blog,
     router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter)(implicit req: RequestHeader)
 
+
+@for(footer <- blog.info.footer) {
+    <div class="footer">
+        <div class="container">
+            <p class="text-muted">
+                @Html(footer)
+            </p>
+        </div>
+    </div>
+}
+
 <style type="text/css">
   @@import "@router.webJarAsset("prettify/prettify.css")";
 </style>

@@ -12,6 +12,8 @@ releaseSettings
 
 ReleaseKeys.crossBuild := true
 
+LessKeys.compress := true
+
 publishTo := {
   val localRepo = new File("../jroper.github.io/").getAbsoluteFile
   if (version.value.trim.endsWith("SNAPSHOT")) 

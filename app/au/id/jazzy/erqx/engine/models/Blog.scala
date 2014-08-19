@@ -14,6 +14,7 @@ case class BlogInfo(title: String,
                     author: String,
                     language: String,
                     description: Option[String] = None,
+                    footer: Option[String] = None,
                     theme: BlogTheme = DefaultTheme,
                     properties: Yaml = Yaml.empty)
 
