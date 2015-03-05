@@ -8,6 +8,7 @@ import play.api.Logger
 
 object BlogLoader {
   case class ReloadBlog(old: Blog)
+  case class LoadBlog(id: String, path: String)
 }
 
 /**
@@ -18,6 +19,11 @@ class BlogLoader(gitRepository: GitRepository, blogRepository: GitBlogRepository
   import BlogLoader._
 
   def receive = {
+    case LoadBlog(id, path) =>
+      blocking {
+        val hash = gitRepository.currentHash
+        sender ! blogRepository.loadBlog(id, path, hash)
+      }
     case ReloadBlog(old) =>
       blocking {
         gitRepository.fetch()

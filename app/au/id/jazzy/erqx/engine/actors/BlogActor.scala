@@ -47,27 +47,17 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
       .withDispatcher("file-loader-dispatcher"),
     "fileLoaders")
 
-  private var blog: Blog = _
-  private var updateJob: Option[Cancellable] = None
-
-  private def getBlog: Blog = {
-    if (blog == null) {
-      val hash = gitRepository.currentHash
-      blog = blogRepository.loadBlog(config.id, path, hash)
+  // If an update interval is configured, then schedule us to update on that interval
+  private val updateJob = config.updateInterval.map { interval =>
+    import context.dispatcher
+    context.system.scheduler.schedule(interval millis, interval millis) {
+      self ! Update
     }
-    blog
   }
 
-
   override def preStart() = {
-    import context.dispatcher
-
-    // If an update interval is configured, then schedule us to update on that interval
-    updateJob = config.updateInterval.map { interval =>
-      context.system.scheduler.schedule(interval millis, interval millis) {
-        self ! Update
-      }
-    }
+    // Load the blog
+    blogLoader ! LoadBlog(config.id, path)
 
     // If a remote is configured, then do an immediate update, this will trigger a fetch, and so potentially trigger
     // an update
@@ -76,22 +66,34 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
     }
   }
 
-  def receive = {
+  def receive = pending()
+
+  def pending(requests: List[(ActorRef, Any)] = Nil): Receive = {
+    case blog: Blog =>
+      context.become(loaded(blog))
+      requests.reverse.foreach {
+        case (sender, msg) => self.tell(msg, sender)
+      }
+    case other =>
+      context.become(pending(sender() -> other :: requests))
+  }
+
+  def loaded(blog: Blog): Receive = {
     case Fetch(key) =>
       if (config.fetchKey.exists(_ == key)) {
-        blogLoader ! ReloadBlog(getBlog)
+        blogLoader ! ReloadBlog(blog)
         sender ! FetchAccepted
       } else {
         sender ! FetchRejected
       }
     case Update =>
-      blogLoader ! ReloadBlog(getBlog)
+      blogLoader ! ReloadBlog(blog)
     case newBlog: Blog =>
-      blog = newBlog
+      context.become(loaded(newBlog))
 
     case GetBlog =>
       try {
-        sender ! getBlog
+        sender ! blog
       } catch {
         case NonFatal(e) => sender ! Failure(e)
       }

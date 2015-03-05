@@ -1,5 +1,7 @@
 package au.id.jazzy.erqx.engine.models
 
+import play.api.i18n.Messages
+
 import scala.collection.SortedMap
 import play.api.mvc.{Call, RequestHeader}
 import play.twirl.api.Html
@@ -33,52 +35,52 @@ trait BlogTheme {
   /**
    * The main template.  This is included by the default blogPost, blogPosts and notFound templates.
    */
-  def main(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)(implicit req: RequestHeader): Html =
+  def main(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)(implicit req: RequestHeader, messages: Messages): Html =
     au.id.jazzy.erqx.themes.jazzy.html.main(blog, router, title)(content)
 
   /**
    * The template for rendering a blog post
    */
   def blogPost(blog: Blog, router: BlogReverseRouter,
-               post: BlogPost, content: String)(implicit req: RequestHeader): Html =
+               post: BlogPost, content: String)(implicit req: RequestHeader, messages: Messages): Html =
     au.id.jazzy.erqx.themes.jazzy.html.blogPost(blog, router, post, content)
 
   /**
    * The template for rendering a list of blog posts
    */
   def blogPosts(blog: Blog, router: BlogReverseRouter, title: Option[String],
-               posts: List[(BlogPost, String)], previous: Option[Call], next: Option[Call])(implicit req: RequestHeader): Html =
+               posts: List[(BlogPost, String)], previous: Option[Call], next: Option[Call])(implicit req: RequestHeader, messages: Messages): Html =
     au.id.jazzy.erqx.themes.jazzy.html.blogPosts(blog, router, title, posts, previous, next)
 
   /**
    * The template for rendering a page
    */
-  def page(blog: Blog, router: BlogReverseRouter, page: Page, content: String)(implicit req: RequestHeader): Html =
+  def page(blog: Blog, router: BlogReverseRouter, page: Page, content: String)(implicit req: RequestHeader, messages: Messages): Html =
     main(blog, router, page.title)(Html(content))
 
   /**
    * The template for rendering the not found page
    */
-  def notFound(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader): Html = {
+  def notFound(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader, messages: Messages): Html = {
     au.id.jazzy.erqx.themes.jazzy.html.pageNotFound(blog, router)
   }
 
   /**
    * The head section of the blog.  Used by the default main template.
    */
-  def head(blog: Blog, router: BlogReverseRouter, title: Option[String])(implicit req: RequestHeader): Html =
+  def head(blog: Blog, router: BlogReverseRouter, title: Option[String])(implicit req: RequestHeader, messages: Messages): Html =
     au.id.jazzy.erqx.themes.jazzy.html.head(blog, router, title)
 
   /**
    * The navigation links in the blog.  Used by the default main template.
    */
-  def navigation(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader): Html =
+  def navigation(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader, messages: Messages): Html =
     au.id.jazzy.erqx.themes.jazzy.html.navigation(blog, router)
 
   /**
    * The footer section of the blog.  Used by the default main template.
    */
-  def footer(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader): Html =
+  def footer(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader, messages: Messages): Html =
     au.id.jazzy.erqx.themes.jazzy.html.footer(blog, router)
 
 }

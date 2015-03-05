@@ -1,6 +1,6 @@
 @(blog: au.id.jazzy.erqx.engine.models.Blog,
     router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter,
-    title: Option[String])(content: Html)(implicit req: RequestHeader)
+    title: Option[String])(content: Html)(implicit req: RequestHeader, messages: Messages)
 
 <!DOCTYPE html>
 <html lang="@blog.info.language">
@@ -25,14 +25,14 @@
             }
           </header>
 
-          <label for="slideout-check" class="slideout-tab">@Messages("about")</label>
+          <label for="slideout-check" class="slideout-tab">@messages("about")</label>
           @content
         </div>
         <div class="slideout col-sm-4">
 
           @for(description <- blog.info.description) {
             <header>
-              <h2>@Messages("about")</h2>
+              <h2>@messages("about")</h2>
             </header>
 
             <div class="description">

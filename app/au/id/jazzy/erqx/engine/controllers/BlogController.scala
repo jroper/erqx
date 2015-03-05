@@ -1,6 +1,6 @@
 package au.id.jazzy.erqx.engine.controllers
 
-import akka.actor.ActorRef
+import akka.actor.ActorSelection
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.Future
@@ -10,12 +10,12 @@ import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.MimeTypes
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, MessagesApi}
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.actors.BlogActor._
 import java.io.File
 
-class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends Controller {
+class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, router: BlogReverseRouter) extends Controller with I18nSupport {
 
   implicit val defaultTimeout = Timeout(5 seconds)
 
@@ -24,24 +24,24 @@ class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends
   }
 
   def year(year: Int, page: Page) = BlogAction.async { implicit req =>
-    paged(req.blog.forYear(year).posts, page, Some(Messages("posts.by.year", year)))(p => router.year(year, p))
+    paged(req.blog.forYear(year).posts, page, Some(messagesApi("posts.by.year", year)))(p => router.year(year, p))
   }
 
   def month(year: Int, month: Int, page: Page) = BlogAction.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
-    paged(byMonth.posts, page, Some(Messages("posts.by.month", year, byMonth.name)))(p => router.month(year, month, p))
+    paged(byMonth.posts, page, Some(messagesApi("posts.by.month", year, byMonth.name)))(p => router.month(year, month, p))
   }
 
   def day(year: Int, month: Int, day: Int, page: Page) = BlogAction.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
     val byDay = byMonth.forDay(day)
     paged(byDay.posts, page,
-      Some(Messages("posts.by.day", year, byMonth.name, day))
+      Some(messagesApi("posts.by.day", year, byMonth.name, day))
     )(p => router.day(year, month, day, p))
   }
 
   def tag(tag: String, page: Page) = BlogAction.async { implicit req =>
-    paged(req.blog.forTag(tag).getOrElse(Nil), page, Some(Messages("posts.by.tag", tag)))(p => router.tag(tag, p))
+    paged(req.blog.forTag(tag).getOrElse(Nil), page, Some(messagesApi("posts.by.tag", tag)))(p => router.tag(tag, p))
   }
 
   def view(year: Int, month: Int, day: Int, permalink: String) = BlogAction.async { implicit req =>
@@ -154,3 +154,19 @@ object BlogController {
 class BlogRequest[A](request: Request[A], val blog: Blog) extends WrappedRequest[A](request)
 
 case class Page(page: Int, perPage: Int)
+
+object Page {
+  import play.api.routing.sird._
+  def unapply(req: RequestHeader): Option[Page] = {
+    Some(Page(
+      req.getQueryString("page") match {
+        case Some(int(p)) => p
+        case _ => 1
+      },
+      req.getQueryString("per_page") match {
+        case Some(int(p)) => p
+        case _ => 5
+      }
+    ))
+  }
+}

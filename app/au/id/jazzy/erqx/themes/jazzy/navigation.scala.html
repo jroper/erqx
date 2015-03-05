@@ -1,10 +1,10 @@
 @(blog: au.id.jazzy.erqx.engine.models.Blog,
-    router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter)(implicit req: RequestHeader)
+    router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter)(implicit req: RequestHeader, messages: Messages)
 
 <ul class="tagCloud">
 @for(tag <- blog.tagCloud) {
   <li class="tagCloud@tag._3">
-    <a href="@router.tag(tag._1)" title="@Messages("tags.blog.entries.count", tag._2)">@tag._1</a></li>
+    <a href="@router.tag(tag._1)" title="@messages("tags.blog.entries.count", tag._2)">@tag._1</a></li>
 }
 </ul>
 

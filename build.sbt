@@ -4,9 +4,9 @@ organization := "au.id.jazzy.erqx"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.5"
 
-crossScalaVersions := Seq("2.11.2", "2.10.4")
+crossScalaVersions := Seq("2.11.5", "2.10.4")
 
 releaseSettings
 
@@ -24,8 +24,8 @@ publishTo := {
 
 // Production dependencies
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-doc" % "1.1.0",
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "3.4.1.201406201815-r",
+  "com.typesafe.play" %% "play-doc" % "1.2.1",
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "3.7.0.201502260915-r",
   "org.yaml" % "snakeyaml" % "1.12"
 )
 
@@ -38,7 +38,8 @@ libraryDependencies ++= Seq(
 
 // Test dependencies
 libraryDependencies ++= Seq(
-  "radeox" % "radeox" % "1.0-b2" % "test"
+  "radeox" % "radeox" % "1.0-b2" % "test",
+  specs2
 )
 
 // Version file
@@ -60,8 +61,3 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
 lazy val minimal = project.in(file("samples/minimal"))
   .enablePlugins(PlayScala)
   .dependsOn(root).aggregate(root)
-
-lazy val customtheme = project.in(file("samples/customtheme"))
-  .enablePlugins(PlayScala)
-  .dependsOn(root).aggregate(root)
-

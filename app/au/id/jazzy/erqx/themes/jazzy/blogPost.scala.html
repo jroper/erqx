@@ -1,7 +1,7 @@
 @(blog: au.id.jazzy.erqx.engine.models.Blog,
     router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter,
     post: au.id.jazzy.erqx.engine.models.BlogPost,
-    content: String)(implicit req: RequestHeader)
+    content: String)(implicit req: RequestHeader, messages: Messages)
 
 @blog.info.theme.main(blog, router, Some(post.title)) {
   <article>

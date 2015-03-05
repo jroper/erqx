@@ -1,24 +1,22 @@
 package au.id.jazzy.erqx.engine
 
-import play.api._
 import java.io.File
-import akka.util.Timeout
-import akka.actor.Props
-import akka.pattern.ask
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import javax.inject.{Singleton, Inject}
+
+import akka.actor.{ActorSelection, ActorSystem, Props}
 import au.id.jazzy.erqx.engine.actors.BlogsActor
-import au.id.jazzy.erqx.engine.actors.BlogsActor._
-import au.id.jazzy.erqx.engine.controllers.BlogsRouter
-import au.id.jazzy.erqx.engine.models.{GitConfig, BlogConfig}
-import play.api.libs.concurrent.Akka
+import au.id.jazzy.erqx.engine.models.{BlogConfig, GitConfig}
+import play.api.{Configuration, Logger}
 
-class BlogPlugin(app: Application) extends Plugin {
+/**
+ * Loads all the blogs.
+ */
+@Singleton
+class Blogs @Inject() (configuration: Configuration, system: ActorSystem) {
 
-  override def onStart() = {
-    val system = Akka.system(app)
+  lazy val blogs: Seq[(BlogConfig, ActorSelection)] = {
 
-    val blogConfigs = app.configuration.getConfig("blogs").map { bcs =>
+    val blogConfigs = configuration.getConfig("blogs").map { bcs =>
       bcs.subKeys.flatMap { name =>
         bcs.getConfig(name).flatMap { blogConfig =>
           val path = blogConfig.getString("path").getOrElse("/blog")
@@ -37,15 +35,20 @@ class BlogPlugin(app: Application) extends Plugin {
       }
     }.toList.flatten.sortBy(_.order)
 
-    implicit val timeout = Timeout(1 minute)
-    val BlogsLoaded(blogs) = Await.result(
-      (system.actorOf(Props[BlogsActor], "blogs") ? LoadBlogs(blogConfigs)).mapTo[BlogsLoaded],
-      1 minute)
+    val blogs = {
+      val blogsActor = system.actorOf(Props(new BlogsActor(blogConfigs)), "blogs")
+      blogConfigs.map { config =>
+        config -> system.actorSelection(blogsActor.path / config.name)
+      }
+    }
 
-    BlogsRouter.startBlogs(blogs.sortBy(_._1.order))
+    val sorted = blogs.sortBy(_._1.order)
 
-    Logger.info("Started blogs: " + blogs.map { blog =>
+    Logger.info("Started blogs: " + sorted.map { blog =>
       blog._1.name + ":" + blog._1.path
     }.mkString(", "))
+
+    sorted
   }
+
 }
