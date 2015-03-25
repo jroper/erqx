@@ -11,12 +11,12 @@ object FeedFormatter {
 
     <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
       <title>{blog.info.title}</title>
-      <link rel="alternate" type="text/html" href={router.index().absoluteURL()} />
-      <link rel="self" type="application/atom+xml" href={router.atom().absoluteURL()} />
+      <link rel="alternate" type="text/html" href={router.index().absoluteURL(req.secure)} />
+      <link rel="self" type="application/atom+xml" href={router.atom().absoluteURL(req.secure)} />
       {blog.info.subTitle.map { subTitle =>
         <subtitle>{subTitle}</subtitle>
       }.toSeq}
-      <id>{router.index().absoluteURL()}</id>
+      <id>{router.index().absoluteURL(req.secure)}</id>
       <rights>{blog.info.author}</rights>
       <updated>{blogUpdate}</updated>
       <dc:creator>{blog.info.author}</dc:creator>
@@ -29,15 +29,15 @@ object FeedFormatter {
 
           <entry>
             <title>{post.title}</title>
-            <link rel="alternate" href={router.view(post).absoluteURL()} />
+            <link rel="alternate" href={router.view(post).absoluteURL(req.secure)} />
             {post.tags.map { tag =>
-              <category term={tag} scheme={router.tag(tag).absoluteURL()} />
+              <category term={tag} scheme={router.tag(tag).absoluteURL(req.secure)} />
             }}
             <author>
               <name>{blog.info.author}</name>
-              <uri>{router.index().absoluteURL()}</uri>
+              <uri>{router.index().absoluteURL(req.secure)}</uri>
             </author>
-            <id>{router.view(post).absoluteURL()}</id>
+            <id>{router.view(post).absoluteURL(req.secure)}</id>
             <updated>{postDate}</updated>
             <published>{postDate}</published>
             <content type="html">{PCData(content)}</content>
