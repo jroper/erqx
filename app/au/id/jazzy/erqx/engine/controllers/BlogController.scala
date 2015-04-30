@@ -158,15 +158,10 @@ case class Page(page: Int, perPage: Int)
 object Page {
   import play.api.routing.sird._
   def unapply(req: RequestHeader): Option[Page] = {
-    Some(Page(
-      req.getQueryString("page") match {
-        case Some(int(p)) => p
-        case _ => 1
-      },
-      req.getQueryString("per_page") match {
-        case Some(int(p)) => p
-        case _ => 5
-      }
-    ))
+    req.queryString match {
+      case q_o"page=${int(page)}" & q_o"page=${int(perPage)}" =>
+        Some(Page(page.getOrElse(1), perPage.getOrElse(5)))
+      case _ => None
+    }
   }
 }

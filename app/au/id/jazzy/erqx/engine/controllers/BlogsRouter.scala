@@ -11,23 +11,6 @@ import play.core.routing.ReverseRouteContext
 import play.utils.UriEncoding
 import au.id.jazzy.erqx.engine.models._
 
-trait SimpleRouter extends Router { self =>
-  def documentation = Nil
-  def withPrefix(prefix: String): Router = new Router {
-    def routes = if (prefix == "/") {
-        self.routes
-    } else {
-      val p = if (prefix.endsWith("/")) prefix else prefix + "/"
-      val prefixed: PartialFunction[RequestHeader, RequestHeader] = {
-        case rh: RequestHeader if rh.path.startsWith(p) => rh.copy(path = rh.path.drop(p.length - 1))
-      }
-      Function.unlift(prefixed.lift.andThen(_.flatMap(self.routes.lift)))
-    }
-    def withPrefix(prefix: String) = self.withPrefix(prefix)
-    def documentation = self.documentation
-  }
-}
-
 @Singleton
 class BlogsRouter @Inject() (messages: MessagesApi, blogs: Blogs) extends SimpleRouter {
 
@@ -60,26 +43,24 @@ class BlogsRouter @Inject() (messages: MessagesApi, blogs: Blogs) extends Simple
 
 class BlogRouter(controller: BlogController) extends SimpleRouter {
 
-  object ? { def unapply[A](a: A) = Some(a, a) }
-
   def routes = {
     // Index
-    case GET(p"/" | p"") ? Page(page) => controller.index(page)
+    case GET((p"/" | p"") ? Page(page)) => controller.index(page)
 
     // View single blog post
     case GET(p"/${int(year)}<\d{4}>/${int(month)}<\d{2}>/${int(day)}<\d{2}>/$permalink.html") =>
       controller.view(year, month, day, permalink)
 
     // By date
-    case GET(p"/${int(year)}<\d{4}>.html") ? Page(page) =>
+    case GET(p"/${int(year)}<\d{4}>.html" ? Page(page)) =>
       controller.year(year, page)
-    case GET(p"/${int(year)}<\d{4}>/${int(month)}<\d{2}>.html") ? Page(page) =>
+    case GET(p"/${int(year)}<\d{4}>/${int(month)}<\d{2}>.html" ? Page(page)) =>
       controller.month(year, month, page)
-    case GET(p"/${int(year)}<\d{4}>/${int(month)}<\d{2}>/${int(day)}<\d{2}>.html") ? Page(page) =>
+    case GET(p"/${int(year)}<\d{4}>/${int(month)}<\d{2}>/${int(day)}<\d{2}>.html" ? Page(page)) =>
       controller.day(year, month, day, page)
 
     // By tag
-    case GET(p"/tags/$tag.html") ? Page(page) => controller.tag(tag, page)
+    case GET(p"/tags/$tag.html" ? Page(page)) => controller.tag(tag, page)
 
     // Atom feed
     case GET(p"/atom.xml") => controller.atom()
@@ -89,7 +70,7 @@ class BlogRouter(controller: BlogController) extends SimpleRouter {
 
     // Assets
     case GET(p"/$path*") => controller.asset(path)
- }
+  }
 }
 
 class BlogReverseRouter(path: => String, globalPath: => String) {
