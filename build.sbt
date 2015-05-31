@@ -22,6 +22,8 @@ publishTo := {
     Some(Resolver.file("releases", localRepo / "releases"))
 }
 
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+
 // Production dependencies
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-doc" % "1.2.1",
