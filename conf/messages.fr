@@ -1,0 +1,13 @@
+about=A propos
+
+tags.blog.entries.count= Nombre d'articles: {0}
+
+blog.posted.date=Posté le {0,date,d MMMM yyyy}
+
+posts.by.year= Articles pour l'année {0,number,####}
+posts.by.month= Articles du mois de {1} {0,number,####}
+posts.by.day= Articles du {2,number,#} {1} {0,number,####}
+posts.by.tag= Tous les articles pour le mot-clé {0}
+
+not.found= Page non trouvée
+not.found.message= Aucune page trouvée pour cette recherche
