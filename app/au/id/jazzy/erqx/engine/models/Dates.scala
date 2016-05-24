@@ -1,6 +1,6 @@
 package au.id.jazzy.erqx.engine.models
 
-import org.joda.time.{YearMonth}
+import org.joda.time.YearMonth
 import scala.collection.SortedMap
 import scala.util.control.Exception._
 import org.joda.time.format.DateTimeFormat
@@ -39,7 +39,7 @@ final case class Month(year: Int, month: Int, days: SortedMap[Int, Day], posts: 
   /**
    * Get the posts for the given day
    */
-  def forDay(day: Int): Day = days.get(day).getOrElse(Day(year, month, day, Nil))
+  def forDay(day: Int): Day = days.getOrElse(day, Day(year, month, day, Nil))
 
   private lazy val partial = allCatch.opt(new YearMonth(year, month))
 
@@ -60,7 +60,7 @@ final case class Year(year: Int, months: SortedMap[Int, Month], posts: List[Blog
   /**
    * Get the posts for the given month
    */
-  def forMonth(month: Int): Month = months.get(month).getOrElse(Month(year, month, SortedMap.empty, Nil))
+  def forMonth(month: Int): Month = months.getOrElse(month, Month(year, month, SortedMap.empty, Nil))
 }
 
 object Year {

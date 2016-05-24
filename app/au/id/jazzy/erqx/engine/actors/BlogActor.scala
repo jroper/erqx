@@ -27,13 +27,13 @@ object BlogActor {
   case class RenderPage(blog: Blog, page: Page)
 }
 
-class BlogActor(config: GitConfig, path: String) extends Actor {
+class BlogActor(config: GitConfig, path: String, classLoader: ClassLoader) extends Actor {
 
   import BlogLoader._
   import BlogActor._
 
   private val gitRepository = new GitRepository(config.gitRepo, config.path, config.branch, config.remote)
-  private val blogRepository = new GitBlogRepository(gitRepository)
+  private val blogRepository = new GitBlogRepository(gitRepository, classLoader)
 
   private val blogLoader = context.actorOf(
     Props(new BlogLoader(gitRepository, blogRepository))

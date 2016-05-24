@@ -3,8 +3,7 @@ package au.id.jazzy.erqx.engine.services.git
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.services.MetaDataParser
 import scala.util.control.Exception._
-import play.api.Play.current
-import play.api.{Logger, Play}
+import play.api.Logger
 import play.api.i18n.Lang
 import au.id.jazzy.erqx.engine.models.BlogInfo
 
@@ -13,10 +12,10 @@ import scala.util.control.NonFatal
 /**
  * Loads the repository from git
  */
-class GitBlogRepository(gitRepo: GitRepository) {
+class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
 
   def loadBlog(id: String, path: String, commitId: String): Blog = {
-    new Blog(id, loadBlogPosts(id, commitId).toList, loadPages(commitId), commitId, path, loadInfo(commitId))
+    new Blog(id, loadBlogPosts(id, commitId), loadPages(commitId), commitId, path, loadInfo(commitId))
   }
 
   def loadBlogPosts(id: String, commitId: String): List[BlogPost] = {
@@ -56,9 +55,9 @@ class GitBlogRepository(gitRepo: GitRepository) {
     val theme = config.getString("theme").flatMap { themeClassName =>
       allCatch.either {
         if (themeClassName.endsWith("$"))
-          Play.classloader.loadClass(themeClassName).getDeclaredField("MODULE$").get(null).asInstanceOf[BlogTheme]
+          classLoader.loadClass(themeClassName).getDeclaredField("MODULE$").get(null).asInstanceOf[BlogTheme]
         else
-          Play.classloader.loadClass(themeClassName).newInstance().asInstanceOf[BlogTheme]
+          classLoader.loadClass(themeClassName).newInstance().asInstanceOf[BlogTheme]
       } match {
         case Right(t) => Some(t)
         case Left(e) =>

@@ -17,14 +17,29 @@ class BlogsRouter @Inject() (messages: MessagesApi, blogs: Blogs) extends Simple
   // We have to keep a reference to the prefix for the reverse routers
   private var prefix = ""
 
-  private val blogRoutes = {
+  private val blogRouters: Seq[(BlogConfig, Router, BlogReverseRouter)] = {
     blogs.blogs.map {
       case (blogConfig, actor) =>
         def blogPath = prefix + blogConfig.path
-        new BlogRouter(new BlogController(messages, actor, new BlogReverseRouter(blogPath, prefix)))
-          .withPrefix(blogConfig.path).routes
-    }.foldLeft(PartialFunction.empty[RequestHeader, Handler])((r1, r2) => r1.orElse(r2))
+        val reverseRouter = new BlogReverseRouter(blogPath, prefix)
+        val router = new BlogRouter(new BlogController(messages, actor, new BlogReverseRouter(blogPath, prefix)))
+          .withPrefix(blogConfig.path)
+        (blogConfig, router, reverseRouter)
+    }
   }
+
+  private val blogReverseRouters: Map[String, BlogReverseRouter] = {
+    blogRouters.map {
+      case (config, _, reverseRouter) => config.name -> reverseRouter
+    }.toMap
+  }
+
+  /** Get the reverse router for the blog with the given name. */
+  def reverseRouterFor(name: String): Option[BlogReverseRouter] =
+    blogReverseRouters.get(name)
+
+  private val blogRoutes = blogRouters.map(_._2.routes)
+    .foldLeft(PartialFunction.empty[RequestHeader, Handler])((r1, r2) => r1.orElse(r2))
 
   val routes = {
     val globalRoutes: PartialFunction[RequestHeader, Handler] = {

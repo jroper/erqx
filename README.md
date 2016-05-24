@@ -31,9 +31,8 @@ Currently it supports one backend - git.
 1. If you don't have an existing Play project that you want to embed it into, create a new one.
 2. Add the following to your `build.sbt` file:
 
-        resolvers += "ERQX Releases" at "https://jroper.github.io/releases"
-
-        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "1.0.0"
+        resolvers += Resolver.bintrayRepo("jroper", "maven")
+        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "1.1.0"
 
 3. Add a route to the blog router to your `conf/routes` file:
 

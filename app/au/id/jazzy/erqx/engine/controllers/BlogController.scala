@@ -3,21 +3,24 @@ package au.id.jazzy.erqx.engine.controllers
 import akka.actor.ActorSelection
 import akka.pattern.ask
 import akka.util.Timeout
+
 import scala.concurrent.Future
 import scala.concurrent.Future.{successful => sync}
 import scala.concurrent.duration._
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.iteratee.Enumerator
 import play.api.libs.MimeTypes
 import play.api.i18n.{I18nSupport, MessagesApi}
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.actors.BlogActor._
 import java.io.File
 
+import akka.stream.scaladsl.StreamConverters
+import play.api.http.HttpEntity
+
 class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, router: BlogReverseRouter) extends Controller with I18nSupport {
 
-  implicit val defaultTimeout = Timeout(5 seconds)
+  implicit val defaultTimeout = Timeout(5.seconds)
 
   def index(page: Page) = BlogAction.async { implicit req =>
     paged(req.blog.posts, page, None)(router.index)
@@ -64,13 +67,14 @@ class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, ro
       // Try first for a static asset
       (blogActor ? LoadStream(req.blog, path)).mapTo[Option[FileStream]].flatMap {
         case Some(FileStream(length, is, ec)) =>
-          val result = Result(ResponseHeader(OK, Map(
-            CONTENT_LENGTH -> length.toString
-          )), Enumerator.fromStream(is)(ec))
 
-          sync(MimeTypes.forFileName(path).map(mt => result.withHeaders(CONTENT_TYPE -> mt)).getOrElse(result))
+          sync(Ok.sendEntity(HttpEntity.Streamed(
+            StreamConverters.fromInputStream(() => is),
+            Some(length),
+            MimeTypes.forFileName(path)
+          )))
 
-        case None => {
+        case None =>
           // Otherwise see if there's a dynamic page
           req.blog.pageForPermalink(path) match {
             case Some(page) =>
@@ -82,7 +86,6 @@ class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, ro
             case None =>
               sync(notFound(req.blog))
           }
-        }
       }
     }
   }
@@ -94,7 +97,8 @@ class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, ro
 
     val zeroBasedPage = page - 1
 
-    val posts = allPosts.drop(zeroBasedPage * perPage).take(perPage)
+    val pageStart = zeroBasedPage * perPage
+    val posts = allPosts.slice(pageStart, pageStart + perPage)
 
     val lastPage = allPosts.size / perPage
     val previous = if (page > 1) Some(route(Page(page - 1, perPage))) else None
@@ -137,7 +141,7 @@ class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, ro
         // etag - take 7 characters of the blog hash and 7 characters of the theme hash. So if either the theme
         // changes, or the blog changes, everything served by the blog will expire.
         val etag = blog.hash.take(7) + blog.info.theme.hash.take(7)
-        if (request.headers.get(IF_NONE_MATCH).exists(_ == etag)) {
+        if (request.headers.get(IF_NONE_MATCH).contains(etag)) {
           sync(NotModified)
         } else {
           block(new BlogRequest(request, blog)).map(_.withHeaders(ETAG -> etag))

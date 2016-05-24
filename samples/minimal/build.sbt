@@ -1,3 +1,1 @@
-scalaVersion := "2.11.5"
-
-routesGenerator := InjectedRoutesGenerator
+scalaVersion := "2.11.8"

@@ -1,26 +1,17 @@
+lazy val root = (project in file("."))
+  .enablePlugins(PlayScala)
+
 name := "erqx-engine"
-
 organization := "au.id.jazzy.erqx"
-
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
-
-scalaVersion := "2.11.5"
-
-crossScalaVersions := Seq("2.11.5", "2.10.4")
-
-releaseSettings
-
-ReleaseKeys.crossBuild := true
 
 LessKeys.compress := true
 
-publishTo := {
-  val localRepo = new File("../jroper.github.io/").getAbsoluteFile
-  if (version.value.trim.endsWith("SNAPSHOT")) 
-    Some(Resolver.file("snapshots", localRepo / "snapshots"))
-  else
-    Some(Resolver.file("releases", localRepo / "releases"))
-}
+bintrayRepository := "maven"
+bintrayPackage := "erqx"
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+
+scalaVersion := "2.11.8"
 
 // Production dependencies
 libraryDependencies ++= Seq(

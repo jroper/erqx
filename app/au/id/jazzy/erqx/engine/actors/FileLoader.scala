@@ -3,7 +3,6 @@ package au.id.jazzy.erqx.engine.actors
 import akka.actor.Actor
 import scala.concurrent.blocking
 import play.doc.PlayDoc
-import java.io.File
 import au.id.jazzy.erqx.engine.services.git.{GitFileRepository, GitRepository}
 import au.id.jazzy.erqx.engine.models.Blog
 

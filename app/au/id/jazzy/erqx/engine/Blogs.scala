@@ -1,18 +1,18 @@
 package au.id.jazzy.erqx.engine
 
 import java.io.File
-import javax.inject.{Singleton, Inject}
+import javax.inject.{Inject, Singleton}
 
 import akka.actor.{ActorSelection, ActorSystem, Props}
 import au.id.jazzy.erqx.engine.actors.BlogsActor
 import au.id.jazzy.erqx.engine.models.{BlogConfig, GitConfig}
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Environment, Logger}
 
 /**
  * Loads all the blogs.
  */
 @Singleton
-class Blogs @Inject() (configuration: Configuration, system: ActorSystem) {
+class Blogs @Inject() (environment: Environment, configuration: Configuration, system: ActorSystem) {
 
   lazy val blogs: Seq[(BlogConfig, ActorSelection)] = {
 
@@ -36,7 +36,7 @@ class Blogs @Inject() (configuration: Configuration, system: ActorSystem) {
     }.toList.flatten.sortBy(_.order)
 
     val blogs = {
-      val blogsActor = system.actorOf(Props(new BlogsActor(blogConfigs)), "blogs")
+      val blogsActor = system.actorOf(Props(new BlogsActor(blogConfigs, environment.classLoader)), "blogs")
       blogConfigs.map { config =>
         config -> system.actorSelection(blogsActor.path / config.name)
       }
