@@ -21,7 +21,7 @@ Currently it supports one backend - git.
 
 ## Planned features
 
-* [prismic.io](http://prismic.io) backend.
+* [prismic.io](https://prismic.io) backend.
 * Virtual hosting.
 * Pluggable blog post formats.
 * Multiple language support.
@@ -183,5 +183,5 @@ Sample blogs can be found in the `samples` directory of this repository.  To run
 
 ## Example sites using erqx
 
-* [all that jazz](http://jazzy.id.au)
-* [RopedIn](http://jazzy.id.au/ropedin)
+* [all that jazz](https://jazzy.id.au)
+* [RopedIn](https://jazzy.id.au/ropedin)
