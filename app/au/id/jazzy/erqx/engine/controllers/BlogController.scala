@@ -16,35 +16,37 @@ import au.id.jazzy.erqx.engine.actors.BlogActor._
 import java.io.File
 
 import akka.stream.scaladsl.StreamConverters
-import play.api.http.HttpEntity
+import play.api.http.{HeaderNames, HttpEntity}
 
-class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, router: BlogReverseRouter) extends Controller with I18nSupport {
+class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, router: BlogReverseRouter) extends I18nSupport with Results with HeaderNames {
 
   implicit val defaultTimeout = Timeout(5.seconds)
+
+  def messages(key: String, args: Any*)(implicit rh: RequestHeader) = messagesApi.preferred(rh).apply(key, args: _*)
 
   def index(page: Page) = BlogAction.async { implicit req =>
     paged(req.blog.posts, page, None)(router.index)
   }
 
   def year(year: Int, page: Page) = BlogAction.async { implicit req =>
-    paged(req.blog.forYear(year).posts, page, Some(messagesApi("posts.by.year", year)))(p => router.year(year, p))
+    paged(req.blog.forYear(year).posts, page, Some(messages("posts.by.year", year)))(p => router.year(year, p))
   }
 
   def month(year: Int, month: Int, page: Page) = BlogAction.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
-    paged(byMonth.posts, page, Some(messagesApi("posts.by.month", year, byMonth.name)))(p => router.month(year, month, p))
+    paged(byMonth.posts, page, Some(messages("posts.by.month", year, byMonth.name)))(p => router.month(year, month, p))
   }
 
   def day(year: Int, month: Int, day: Int, page: Page) = BlogAction.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
     val byDay = byMonth.forDay(day)
     paged(byDay.posts, page,
-      Some(messagesApi("posts.by.day", year, byMonth.name, day))
+      Some(messages("posts.by.day", year, byMonth.name, day))
     )(p => router.day(year, month, day, p))
   }
 
   def tag(tag: String, page: Page) = BlogAction.async { implicit req =>
-    paged(req.blog.forTag(tag).getOrElse(Nil), page, Some(messagesApi("posts.by.tag", tag)))(p => router.tag(tag, p))
+    paged(req.blog.forTag(tag).getOrElse(Nil), page, Some(messages("posts.by.tag", tag)))(p => router.tag(tag, p))
   }
 
   def view(year: Int, month: Int, day: Int, permalink: String) = BlogAction.async { implicit req =>

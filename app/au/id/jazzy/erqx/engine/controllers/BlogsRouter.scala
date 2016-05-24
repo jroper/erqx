@@ -56,7 +56,7 @@ class BlogsRouter @Inject() (messages: MessagesApi, blogs: Blogs) extends Simple
   }
 }
 
-class BlogRouter(controller: BlogController) extends SimpleRouter {
+class BlogRouter(controller: BlogController) extends SimpleRouter { self =>
 
   def routes = {
     // Index
@@ -85,6 +85,26 @@ class BlogRouter(controller: BlogController) extends SimpleRouter {
 
     // Assets
     case GET(p"/$path*") => controller.asset(path)
+  }
+
+  // Copied from Plays SimpleRouter to fix allowing the router to handle paths that are exactly equal to the prefix
+  override def withPrefix(prefix: String): Router = {
+    if (prefix == "/") {
+      self
+    } else {
+      new Router {
+        def routes = {
+          val p = if (prefix.endsWith("/")) prefix else prefix + "/"
+          val prefixed: PartialFunction[RequestHeader, RequestHeader] = {
+            case rh: RequestHeader if rh.path.startsWith(p) || rh.path.equals(prefix) =>
+              rh.copy(path = rh.path.drop(p.length - 1))
+          }
+          Function.unlift(prefixed.lift.andThen(_.flatMap(self.routes.lift)))
+        }
+        def withPrefix(prefix: String) = self.withPrefix(prefix)
+        def documentation = self.documentation
+      }
+    }
   }
 }
 
