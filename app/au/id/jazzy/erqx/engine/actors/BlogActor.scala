@@ -1,5 +1,6 @@
 package au.id.jazzy.erqx.engine.actors
 
+import play.api.libs.Crypto
 import akka.actor._
 import akka.routing._
 import java.io.InputStream
@@ -78,7 +79,7 @@ class BlogActor(config: GitConfig, path: String) extends Actor {
 
   def receive = {
     case Fetch(key) =>
-      if (config.fetchKey.exists(_ == key)) {
+      if (config.fetchKey.exists(reqKey => Crypto.constantTimeEquals(reqKey, key))) {
         blogLoader ! ReloadBlog(getBlog)
         sender ! FetchAccepted
       } else {

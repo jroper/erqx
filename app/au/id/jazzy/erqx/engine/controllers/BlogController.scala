@@ -110,7 +110,7 @@ class BlogController(blogActor: ActorRef, val router: BlogReverseRouter) extends
 
   def atom = BlogAction.async { implicit req =>
     val posts = req.blog.posts.take(5)
-    val absoluteUri = router.index().absoluteURL()
+    val absoluteUri = router.index().absoluteURL(req.secure)
     Future.sequence(posts.map { post =>
       (blogActor ? RenderPost(req.blog, post, Some(absoluteUri))).mapTo[Option[String]].map(_.map(post -> _))
     }).map { loaded =>
