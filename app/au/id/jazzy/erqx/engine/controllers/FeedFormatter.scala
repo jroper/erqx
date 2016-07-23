@@ -4,10 +4,13 @@ import scala.xml.{PCData, Elem}
 import play.api.mvc.RequestHeader
 import org.joda.time.format.ISODateTimeFormat
 import au.id.jazzy.erqx.engine.models._
+import org.joda.time.DateTime
 
 object FeedFormatter {
   def atom(blog: Blog, posts: List[(BlogPost, String)], router: BlogReverseRouter)(implicit req: RequestHeader): Elem = {
-    val blogUpdate = ISODateTimeFormat.dateTime.print(blog.posts.head.date)
+
+    // Use the current time as the update date if there are no blog posts.
+    val blogUpdate = ISODateTimeFormat.dateTime.print(blog.posts.headOption.fold(new DateTime()){_.date})
 
     <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
       <title>{blog.info.title}</title>
