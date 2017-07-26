@@ -44,8 +44,8 @@ object Yaml {
     import scala.collection.JavaConverters._
 
     def yamlToScala(obj: AnyRef): AnyRef = obj match {
-      case map: java.util.Map[String, AnyRef] => new Yaml(map.asScala.toMap.mapValues(yamlToScala))
-      case list: java.util.List[AnyRef] => list.asScala.toList.map(yamlToScala)
+      case map: java.util.Map[String, AnyRef] @unchecked => new Yaml(map.asScala.toMap.mapValues(yamlToScala))
+      case list: java.util.List[AnyRef] @unchecked => list.asScala.toList.map(yamlToScala)
       case s: String => s
       case n: Number => n
       case b: java.lang.Boolean => b

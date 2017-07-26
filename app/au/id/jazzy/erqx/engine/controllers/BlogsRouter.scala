@@ -1,18 +1,17 @@
 package au.id.jazzy.erqx.engine.controllers
 
-import javax.inject.{Singleton, Inject}
+import javax.inject.{Inject, Singleton}
 
 import au.id.jazzy.erqx.engine.Blogs
-import play.api.i18n.MessagesApi
 import play.api.routing._
 import play.api.routing.sird._
 import play.api.mvc._
-import play.core.routing.ReverseRouteContext
 import play.utils.UriEncoding
 import au.id.jazzy.erqx.engine.models._
+import controllers.{Assets, AssetsFinder}
 
 @Singleton
-class BlogsRouter @Inject() (messages: MessagesApi, blogs: Blogs) extends SimpleRouter {
+class BlogsRouter @Inject() (components: ControllerComponents, blogs: Blogs, assets: Assets, assetsFinder: AssetsFinder) extends SimpleRouter {
 
   // We have to keep a reference to the prefix for the reverse routers
   private var prefix = ""
@@ -21,8 +20,8 @@ class BlogsRouter @Inject() (messages: MessagesApi, blogs: Blogs) extends Simple
     blogs.blogs.map {
       case (blogConfig, actor) =>
         def blogPath = prefix + blogConfig.path
-        val reverseRouter = new BlogReverseRouter(blogPath, prefix)
-        val router = new BlogRouter(new BlogController(messages, actor, new BlogReverseRouter(blogPath, prefix)))
+        val reverseRouter = new BlogReverseRouter(assetsFinder, blogPath, prefix)
+        val router = new BlogRouter(new BlogController(components, actor, reverseRouter))
           .withPrefix(blogConfig.path)
         (blogConfig, router, reverseRouter)
     }
@@ -44,7 +43,7 @@ class BlogsRouter @Inject() (messages: MessagesApi, blogs: Blogs) extends Simple
   val routes = {
     val globalRoutes: PartialFunction[RequestHeader, Handler] = {
       // Global routes
-      case GET(p"/_assets/lib/$path*") => controllers.Assets.versioned("/public/lib", path)
+      case GET(p"/_assets/lib/$path*") => assets.versioned("/public/lib", path)
     }
 
     globalRoutes.orElse(blogRoutes)
@@ -97,7 +96,7 @@ class BlogRouter(controller: BlogController) extends SimpleRouter { self =>
           val p = if (prefix.endsWith("/")) prefix else prefix + "/"
           val prefixed: PartialFunction[RequestHeader, RequestHeader] = {
             case rh: RequestHeader if rh.path.startsWith(p) || rh.path.equals(prefix) =>
-              rh.copy(path = rh.path.drop(p.length - 1))
+              rh.withTarget(rh.target.withPath(rh.path.drop(p.length - 1)))
           }
           Function.unlift(prefixed.lift.andThen(_.flatMap(self.routes.lift)))
         }
@@ -108,7 +107,7 @@ class BlogRouter(controller: BlogController) extends SimpleRouter { self =>
   }
 }
 
-class BlogReverseRouter(path: => String, globalPath: => String) {
+class BlogReverseRouter(assetsFinder: AssetsFinder, path: => String, globalPath: => String) {
   import controllers.Assets
 
   def index(page: Page = defaultPage): Call = Call("GET", withPaging(s"$path/", page))
@@ -131,9 +130,7 @@ class BlogReverseRouter(path: => String, globalPath: => String) {
   def asset(file: String) = Call("GET", s"$path/$file")
 
   def webJarAsset(file: String) =
-    Call("GET", s"$globalPath/_assets/lib/${Assets.Asset.assetPathBindable(
-      ReverseRouteContext(Map("path" -> "/public/lib"))
-    ).unbind("file", Assets.Asset(file))}")
+    Call("GET", s"$globalPath/_assets/lib/${assetsFinder.findAssetPath("/public/lib", "/public/lib/" + file)}")
 
   private def withPaging(path: String, page: Page) = {
     val qs = (Nil ++

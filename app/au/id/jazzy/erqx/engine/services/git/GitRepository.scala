@@ -29,7 +29,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
    */
   def currentHash: String = {
     val ref = remote.map("refs/remotes/" + _ + "/").getOrElse("") + branch
-    Option(repository.getRef(ref))
+    Option(repository.findRef(ref))
       .map(_.getObjectId.name())
       .getOrElse {
         throw new RuntimeException("Could not find ref \"" + ref + "\" in repository " + gitDir)
@@ -55,7 +55,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
 
   def loadContent(commitId: String, path: String): Option[String] = {
     loadStream(commitId, path).map {
-      case (length, is) => try {
+      case (_, is) => try {
         Source.fromInputStream(is).mkString
       } finally {
         is.close()
@@ -124,7 +124,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
         treeWalk.setFilter(filter)
         block(treeWalk)
       } finally {
-        treeWalk.release()
+        treeWalk.close()
       }
     } finally {
       revWalk.dispose()

@@ -8,6 +8,8 @@ import au.id.jazzy.erqx.engine.actors.BlogsActor
 import au.id.jazzy.erqx.engine.models.{BlogConfig, GitConfig}
 import play.api.{Configuration, Environment, Logger}
 
+import scala.concurrent.duration.FiniteDuration
+
 /**
  * Loads all the blogs.
  */
@@ -16,24 +18,25 @@ class Blogs @Inject() (environment: Environment, configuration: Configuration, s
 
   lazy val blogs: Seq[(BlogConfig, ActorSelection)] = {
 
-    val blogConfigs = configuration.getConfig("blogs").map { bcs =>
-      bcs.subKeys.flatMap { name =>
-        bcs.getConfig(name).flatMap { blogConfig =>
-          val path = blogConfig.getString("path").getOrElse("/blog")
-          blogConfig.getConfig("gitConfig").map { gc =>
-            BlogConfig(name, path, GitConfig(
-              name,
-              new File(gc.getString("gitRepo").getOrElse(".")),
-              gc.getString("path"),
-              gc.getString("branch").getOrElse("published"),
-              gc.getString("remote"),
-              gc.getString("fetchKey"),
-              gc.getMilliseconds("updateInterval")
-            ), blogConfig.getInt("order").getOrElse(10))
-          }
-        }
-      }
-    }.toList.flatten.sortBy(_.order)
+    val blogConfigs = configuration.getPrototypedMap("blogs").map {
+      case (name, blogConfig) =>
+        val path = blogConfig.get[String]("path")
+        val gitConfig = blogConfig.get[Configuration]("gitConfig")
+        val order = blogConfig.get[Int]("order")
+
+        BlogConfig(name, path,
+          GitConfig(
+            name,
+            new File(gitConfig.get[String]("gitRepo")),
+            gitConfig.get[Option[String]]("path"),
+            gitConfig.get[String]("branch"),
+            gitConfig.get[Option[String]]("remote"),
+            gitConfig.get[Option[String]]("fetchKey"),
+            gitConfig.get[Option[FiniteDuration]]("updateInterval")
+          ),
+          order
+        )
+    }.toList.sortBy(_.order)
 
     val blogs = {
       val blogsActor = system.actorOf(Props(new BlogsActor(blogConfigs, environment.classLoader)), "blogs")

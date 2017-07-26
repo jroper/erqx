@@ -8,19 +8,20 @@ import scala.concurrent.Future
 import scala.concurrent.Future.{successful => sync}
 import scala.concurrent.duration._
 import play.api.mvc._
-import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.MimeTypes
-import play.api.i18n.{I18nSupport, MessagesApi}
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.actors.BlogActor._
 import java.io.File
 
 import akka.stream.scaladsl.StreamConverters
-import play.api.http.{HeaderNames, HttpEntity}
+import play.api.http.HttpEntity
+import play.api.i18n.{I18nSupport, Lang, Messages}
 
-class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, router: BlogReverseRouter) extends I18nSupport with Results with HeaderNames {
+class BlogController(components: ControllerComponents, blogActor: ActorSelection, router: BlogReverseRouter)
+  extends AbstractController(components) with I18nSupport {
 
   implicit val defaultTimeout = Timeout(5.seconds)
+  implicit def langFromMessages(implicit messages: Messages): Lang = messages.lang
+  implicit val ec = components.executionContext
 
   def messages(key: String, args: Any*)(implicit rh: RequestHeader) = messagesApi.preferred(rh).apply(key, args: _*)
 
@@ -73,7 +74,7 @@ class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, ro
           sync(Ok.sendEntity(HttpEntity.Streamed(
             StreamConverters.fromInputStream(() => is),
             Some(length),
-            MimeTypes.forFileName(path)
+            components.fileMimeTypes.forFileName(path)
           )))
 
         case None =>
@@ -136,13 +137,16 @@ class BlogController(val messagesApi: MessagesApi, blogActor: ActorSelection, ro
   /**
    * Action builder for blog requests. Loads the current blog, as well as handles etag caching headers
    */
-  object BlogAction extends ActionBuilder[BlogRequest] {
+  object BlogAction extends ActionBuilder[BlogRequest, Unit] {
+
+    override val parser = components.parsers.empty
+    override protected def executionContext = components.executionContext
 
     def invokeBlock[A](request: Request[A], block: (BlogRequest[A]) => Future[Result]) = {
       (blogActor ? GetBlog).mapTo[Blog].flatMap { blog =>
         // etag - take 7 characters of the blog hash and 7 characters of the theme hash. So if either the theme
         // changes, or the blog changes, everything served by the blog will expire.
-        val etag = blog.hash.take(7) + blog.info.theme.hash.take(7)
+        val etag = "\"" + blog.hash.take(7) + blog.info.theme.hash.take(7) + "\""
         if (request.headers.get(IF_NONE_MATCH).contains(etag)) {
           sync(NotModified)
         } else {

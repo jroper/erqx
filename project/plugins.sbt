@@ -1,4 +1,4 @@
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.3")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.2")
 addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.1.1")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
 addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")

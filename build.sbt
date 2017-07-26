@@ -9,14 +9,16 @@ LessKeys.compress := true
 bintrayRepository := "maven"
 bintrayPackage := "erqx"
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
+releaseCrossBuild := true
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.2"
+crossScalaVersions := Seq("2.11.11", "2.12.2")
 
 // Production dependencies
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-doc" % "1.2.1",
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "3.7.0.201502260915-r",
+  "com.typesafe.play" %% "play-doc" % "1.8.1",
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r",
   "org.yaml" % "snakeyaml" % "1.12"
 )
 
@@ -34,20 +36,22 @@ libraryDependencies ++= Seq(
 )
 
 // Version file
-sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
-  val hash = ("git rev-parse HEAD" !!).trim
+sourceGenerators in Compile += Def.task {
+  val dir = (sourceManaged in Compile).value
+  val hash = "git rev-parse HEAD".!!.trim
   val file = dir / "au" / "id" / "jazzy" / "erqx" / "engine" / "ErqxBuild.scala"
   if (!file.exists || !IO.read(file).contains(hash)) {
     IO.write(file,
       """ |package au.id.jazzy.erqx.engine
-          |
-          |object ErqxBuild {
-          |  val hash = "%s"
-          |}
-        """.stripMargin.format(hash))
+        |
+        |object ErqxBuild {
+        |  val hash = "%s"
+        |  val version = "%s"
+        |}
+      """.stripMargin.format(hash, version.value))
   }
   Seq(file)
-}
+}.taskValue
 
 lazy val minimal = project.in(file("samples/minimal"))
   .enablePlugins(PlayScala)

@@ -27,7 +27,7 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
           MetaDataParser.parsePostFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1))
         } catch {
           case NonFatal(e) =>
-            throw new RuntimeException(s"Error loading post '$path' from blog '$id'")
+            throw new RuntimeException(s"Error loading post '$path' from blog '$id'", e)
         } finally {
           is.close()
         }

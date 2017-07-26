@@ -4,7 +4,6 @@ import akka.actor._
 import akka.routing._
 import java.io.InputStream
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
 import au.id.jazzy.erqx.engine.models._
 import akka.actor.Status.Failure
 import scala.util.control.NonFatal
@@ -50,7 +49,7 @@ class BlogActor(config: GitConfig, path: String, classLoader: ClassLoader) exten
   // If an update interval is configured, then schedule us to update on that interval
   private val updateJob = config.updateInterval.map { interval =>
     import context.dispatcher
-    context.system.scheduler.schedule(interval millis, interval millis) {
+    context.system.scheduler.schedule(interval, interval) {
       self ! Update
     }
   }

@@ -2,6 +2,8 @@ package au.id.jazzy.erqx.engine.models
 
 import java.io.File
 
+import scala.concurrent.duration.FiniteDuration
+
 /**
  * Configuration for blogs
  */
@@ -22,5 +24,5 @@ case class GitConfig(
   branch: String,
   remote: Option[String],
   fetchKey: Option[String],
-  updateInterval: Option[Long]
+  updateInterval: Option[FiniteDuration]
 )

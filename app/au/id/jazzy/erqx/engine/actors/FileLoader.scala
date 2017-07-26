@@ -1,8 +1,9 @@
 package au.id.jazzy.erqx.engine.actors
 
 import akka.actor.Actor
+
 import scala.concurrent.blocking
-import play.doc.PlayDoc
+import play.doc.{PlayDoc, PlayDocTemplates}
 import au.id.jazzy.erqx.engine.services.git.{GitFileRepository, GitRepository}
 import au.id.jazzy.erqx.engine.models.Blog
 
@@ -42,7 +43,7 @@ class FileLoader(gitRepository: GitRepository) extends Actor {
         format match {
           case "md" =>
             val repo = new GitFileRepository(gitRepository, blog.hash, None)
-            new PlayDoc(repo, repo, "", "").render(body, None)
+            new PlayDoc(repo, repo, "", "", None, PlayDocTemplates, None).render(body, None)
           case _ =>
             body
         }
