@@ -164,12 +164,15 @@ object Page {
   val DefaultPage = 1
   val DefaultPageSize = 5
   val MaxPageSize = 10
+  val Default = Page(DefaultPage, DefaultPageSize)
 
   def unapply(req: RequestHeader): Option[Page] = {
     req.queryString match {
       case q_o"page=${int(page)}" & q_o"per_page=${int(perPage)}" =>
         Some(Page(page.getOrElse(Page.DefaultPage), perPage.getOrElse(Page.DefaultPageSize)))
-      case _ => None
+      // We only get here if the page or per_page weren't integers, in which case, ignore and default
+      // to the default page
+      case _ => Some(Default)
     }
   }
 }
