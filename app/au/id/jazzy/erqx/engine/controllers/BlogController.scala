@@ -159,12 +159,11 @@ class BlogRequest[A](request: Request[A], val blog: Blog) extends WrappedRequest
 case class Page(page: Int, perPage: Int)
 
 object Page {
+  import play.api.routing.sird._
+
   val DefaultPage = 1
   val DefaultPageSize = 5
-}
 
-object Page {
-  import play.api.routing.sird._
   def unapply(req: RequestHeader): Option[Page] = {
     req.queryString match {
       case q_o"page=${int(page)}" & q_o"per_page=${int(perPage)}" =>
