@@ -22,7 +22,8 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
     (gitRepo.listAllFilesInPath(commitId, "_posts").map { files =>
       files.map { file =>
         val path = "_posts/" + file
-        val Some((_, is)) = gitRepo.loadStream(commitId, path)
+        val Some(fileLoader) = gitRepo.loadStream(commitId, path)
+        val is = fileLoader.openStream()
         try {
           MetaDataParser.parsePostFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1))
         } catch {
@@ -39,7 +40,8 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
     (gitRepo.listAllFilesInPath(commitId, "_pages").map { files =>
       files.map { file =>
         val path = "_pages/" + file
-        val Some((_, is)) = gitRepo.loadStream(commitId, path)
+        val Some(fileLoader) = gitRepo.loadStream(commitId, path)
+        val is = fileLoader.openStream()
         try {
           MetaDataParser.parsePageFrontMatter(is, path, file)
         } finally {

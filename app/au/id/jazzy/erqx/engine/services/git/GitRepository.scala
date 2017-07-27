@@ -1,9 +1,10 @@
 package au.id.jazzy.erqx.engine.services.git
 
-import java.io.{InputStream, File}
-import org.eclipse.jgit.lib.{ObjectId, Constants, RepositoryBuilder}
+import java.io.{File, InputStream}
+
+import org.eclipse.jgit.lib._
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.treewalk.filter.{PathSuffixFilter, TreeFilter, PathFilter}
+import org.eclipse.jgit.treewalk.filter.{PathFilter, PathSuffixFilter, TreeFilter}
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.revwalk.RevWalk
 import play.doc.{FileHandle, FileRepository}
@@ -42,24 +43,28 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
    * @param path The path to load
    * @return A tuple of the file size and its input stream, if the file was found
    */
-  def loadStream(commitId: String, path: String): Option[(Long, InputStream)] = {
+  def loadStream(commitId: String, path: String): Option[ObjectLoader] = {
     scanFiles(ObjectId.fromString(commitId), PathFilter.create(pathPrefix.getOrElse("") + path)) { treeWalk =>
       if (!treeWalk.next()) {
         None
       } else {
         val file = repository.open(treeWalk.getObjectId(0))
-        Some((file.getSize, file.openStream()))
+        Some(file)
       }
     }
   }
 
   def loadContent(commitId: String, path: String): Option[String] = {
     loadStream(commitId, path).map {
-      case (_, is) => try {
-        Source.fromInputStream(is).mkString
-      } finally {
-        is.close()
-      }
+      case file if file.isLarge =>
+        val is = file.openStream()
+        try {
+          Source.fromInputStream(file.openStream()).mkString
+        } finally {
+          is.close()
+        }
+      case smallFile =>
+        new String(smallFile.getCachedBytes, "utf-8")
     }
   }
 
@@ -135,10 +140,11 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
 class GitFileRepository(gitRepository: GitRepository, commitId: String, base: Option[String]) extends FileRepository {
   def loadFile[A](path: String)(loader: (InputStream) => A) = {
     gitRepository.loadStream(commitId, base.map(_ + "/" + path).getOrElse(path)).map { file =>
+      val is = file.openStream()
       try {
-        loader(file._2)
+        loader(is)
       } finally {
-        file._2.close()
+        is.close()
       }
     }
   }
@@ -146,8 +152,9 @@ class GitFileRepository(gitRepository: GitRepository, commitId: String, base: Op
   def findFileWithName(name: String) = gitRepository.findFileWithName(commitId, base, name)
 
   def handleFile[A](path: String)(handler: (FileHandle) => A) = {
-    gitRepository.loadStream(commitId, base.map(_ + "/" + path).getOrElse(path)).map {
-      case (length, is) => handler(FileHandle(path.drop(path.lastIndexOf('/') + 1), length, is, () => is.close()))
+    gitRepository.loadStream(commitId, base.map(_ + "/" + path).getOrElse(path)).map { file =>
+      val is = file.openStream()
+      handler(FileHandle(path.drop(path.lastIndexOf('/') + 1), file.getSize, is, () => is.close()))
     }
   }
 }

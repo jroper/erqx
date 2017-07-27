@@ -1,11 +1,14 @@
 package au.id.jazzy.erqx.engine.actors
 
 import akka.actor.Actor
+import akka.stream.scaladsl.StreamConverters
+import akka.util.ByteString
 
 import scala.concurrent.blocking
 import play.doc.{PlayDoc, PlayDocTemplates}
 import au.id.jazzy.erqx.engine.services.git.{GitFileRepository, GitRepository}
 import au.id.jazzy.erqx.engine.models.Blog
+import play.api.http.HttpEntity
 
 /**
  * Actor responsible for loading and rendering files
@@ -21,7 +24,14 @@ class FileLoader(gitRepository: GitRepository) extends Actor {
 
     case LoadStream(blog, path) =>
       sender ! blocking(gitRepository.loadStream(blog.hash, path).map {
-        case (length, is) => FileStream(length, is, context.dispatcher)
+        case file if file.isLarge =>
+          HttpEntity.Streamed(
+            StreamConverters.fromInputStream(file.openStream _),
+            Some(file.getSize),
+            None
+          )
+        case smallFile =>
+          HttpEntity.Strict(ByteString(smallFile.getCachedBytes), None)
       })
 
     case RenderPost(blog, post, absoluteUri) =>

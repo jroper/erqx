@@ -21,7 +21,6 @@ object BlogActor {
   case class LoadContent(blog: Blog, file: String)
   case class LoadStream(blog: Blog, file: String)
   case class RenderPost(blog: Blog, post: BlogPost, absoluteUri: Option[String] = None)
-  case class FileStream(length: Long, is: InputStream, ec: ExecutionContext)
 
   case class RenderPage(blog: Blog, page: Page)
 }

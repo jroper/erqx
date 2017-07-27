@@ -12,7 +12,6 @@ import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.actors.BlogActor._
 import java.io.File
 
-import akka.stream.scaladsl.StreamConverters
 import au.id.jazzy.erqx.engine.actors.BlogRequestCache
 import play.api.http.HttpEntity
 import play.api.i18n.{I18nSupport, Lang, Messages}
@@ -71,14 +70,10 @@ class BlogController(components: ControllerComponents, blogActor: ActorSelection
       sync(notFound(req.blog))
     } else {
       // Try first for a static asset
-      (blogActor ? LoadStream(req.blog, path)).mapTo[Option[FileStream]].flatMap {
-        case Some(FileStream(length, is, ec)) =>
-
-          sync(Ok.sendEntity(HttpEntity.Streamed(
-            StreamConverters.fromInputStream(() => is),
-            Some(length),
-            components.fileMimeTypes.forFileName(path)
-          )))
+      (blogActor ? LoadStream(req.blog, path)).mapTo[Option[HttpEntity]].flatMap {
+        case Some(entity) =>
+          val withContentType = components.fileMimeTypes.forFileName(path).fold(entity)(entity.as)
+          sync(Ok.sendEntity(withContentType))
 
         case None =>
           // Otherwise see if there's a dynamic page
