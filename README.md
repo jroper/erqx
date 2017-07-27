@@ -18,6 +18,7 @@ Currently it supports one backend - git.
 * Default theme uses responsive layout and Disqus for comments.
 * Support for many common blog features including tags, archive navigation, ATOM feeds.
 * Renderable static pages.
+* Heavy use of caching.
 
 ## Planned features
 
@@ -32,7 +33,7 @@ Currently it supports one backend - git.
 2. Add the following to your `build.sbt` file:
 
         resolvers += Resolver.bintrayRepo("jroper", "maven")
-        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "2.1.0"
+        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "2.1.1"
 
 3. Add a route to the blog router to your `conf/routes` file:
 
@@ -185,3 +186,11 @@ Sample blogs can be found in the `samples` directory of this repository.  To run
 
 * [all that jazz](https://jazzy.id.au)
 * [RopedIn](https://jazzy.id.au/ropedin)
+
+## A note on performance
+
+The backend of erqx isn't particularly fast - on my blog, rendering the front page took at least 150ms and generated 20mb of garbage on the heap. This is primarily due to using jgit directly on the backend. However, this poor performance is alleviated by ERQX's smart caching. ERQX caches not just the loading, but the rendering and gzipping of all pages and resources in a LRU cache (this cache is implemented as an actor for concurrency control, and uses low/high watermarks to achieve amortized constant time execution). With this caching, response time is a few milliseconds, and the garbage generated per request is negligable. On my single CPU linode, running a benchmark from the same node, I get about 3K requests per second, and this doesn't degrade as I increase the concurrency. Put simply, ERQX on modest hardware can shrug most typical load spikes of viral content. And of course, since ERQX nodes are stateless (they store their own clone of the git repository), they can be scaled out horizontally if you really need that.
+
+In addition to the in memory caching on the backend, ERQX makes optimal use of etags for all HTML pages and resources served from within blogs, using a combination of the software version and the git hash of the blog to create the etag, plus when used in combination with the sbt-web digest plugin, all static resources served by ERQX (except for those served out of git) will be fingerprinted and served with far off expiry dates.
+
+It's also recommended that you use the sbt-web gzip plugin to gzip all resources. When this is done, ERQX does not need to be used with Play's gzip filter since all resources are either pre gzipped, or gzipped by ERQX itself (before storing the gzipped content in its cache).
