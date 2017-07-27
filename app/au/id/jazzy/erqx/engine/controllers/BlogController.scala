@@ -93,8 +93,8 @@ class BlogController(components: ControllerComponents, blogActor: ActorSelection
 
   def paged[A](allPosts: List[BlogPost], p: Page, title: Option[String])
            (route: (Page) => Call)(implicit req: BlogRequest[A]) = {
-    val page = if (p.page < 1) 1 else p.page
-    val perPage = if (p.perPage < 1) 1 else if (p.perPage > 10) 10 else p.perPage
+    val page = p.page.max(1)
+    val perPage = p.perPage.max(1).min(Page.MaxPageSize)
 
     val zeroBasedPage = page - 1
 
@@ -163,6 +163,7 @@ object Page {
 
   val DefaultPage = 1
   val DefaultPageSize = 5
+  val MaxPageSize = 10
 
   def unapply(req: RequestHeader): Option[Page] = {
     req.queryString match {
