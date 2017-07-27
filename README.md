@@ -33,7 +33,7 @@ Currently it supports one backend - git.
 2. Add the following to your `build.sbt` file:
 
         resolvers += Resolver.bintrayRepo("jroper", "maven")
-        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "2.1.1"
+        libraryDependencies += "au.id.jazzy.erqx" %% "erqx-engine" % "2.1.2"
 
 3. Add a route to the blog router to your `conf/routes` file:
 
