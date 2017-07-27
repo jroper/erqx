@@ -4,9 +4,13 @@ import java.io.File
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.{ActorSelection, ActorSystem, Props}
-import au.id.jazzy.erqx.engine.actors.BlogsActor
+import akka.stream.Materializer
+import au.id.jazzy.erqx.engine.actors.{BlogRequestCache, BlogsActor}
 import au.id.jazzy.erqx.engine.models.{BlogConfig, GitConfig}
+import com.typesafe.config.ConfigMemorySize
+import play.api.i18n.MessagesApi
 import play.api.{Configuration, Environment, Logger}
+import play.filters.gzip.GzipFilterConfig
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -14,11 +18,12 @@ import scala.concurrent.duration.FiniteDuration
  * Loads all the blogs.
  */
 @Singleton
-class Blogs @Inject() (environment: Environment, configuration: Configuration, system: ActorSystem) {
+class Blogs @Inject() (environment: Environment, configuration: Configuration, system: ActorSystem,
+  messagesApi: MessagesApi, gzipFilterConfig: GzipFilterConfig)(implicit mat: Materializer) {
 
   lazy val blogs: Seq[(BlogConfig, ActorSelection)] = {
 
-    val blogConfigs = configuration.getPrototypedMap("blogs").map {
+    val blogConfigs = configuration.getPrototypedMap("blogs", "erqx.blogs.prototype").map {
       case (name, blogConfig) =>
         val path = blogConfig.get[String]("path")
         val gitConfig = blogConfig.get[Configuration]("gitConfig")
@@ -52,6 +57,12 @@ class Blogs @Inject() (environment: Environment, configuration: Configuration, s
     }.mkString(", "))
 
     sorted
+  }
+
+  lazy val blogRequestCache = {
+    val lowWatermark = configuration.get[ConfigMemorySize]("erqx.cache.low-watermark")
+    val highWatermark = configuration.get[ConfigMemorySize]("erqx.cache.high-watermark")
+    system.actorOf(BlogRequestCache.props(messagesApi, lowWatermark.toBytes, highWatermark.toBytes, gzipFilterConfig), "blog-request-cache")
   }
 
 }

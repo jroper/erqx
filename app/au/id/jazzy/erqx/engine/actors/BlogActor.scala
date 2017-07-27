@@ -36,14 +36,14 @@ class BlogActor(config: GitConfig, path: String, classLoader: ClassLoader) exten
 
   private val blogLoader = context.actorOf(
     Props(new BlogLoader(gitRepository, blogRepository))
-      .withDispatcher("blog-loader-dispatcher"),
+      .withDispatcher("erqx.blog-loader-dispatcher"),
     "blogLoader"
   )
 
   private val fileLoaders = context.actorOf(
     Props(new FileLoader(gitRepository))
       .withRouter(SmallestMailboxPool(nrOfInstances = 10))
-      .withDispatcher("file-loader-dispatcher"),
+      .withDispatcher("erqx.file-loader-dispatcher"),
     "fileLoaders")
 
   // If an update interval is configured, then schedule us to update on that interval

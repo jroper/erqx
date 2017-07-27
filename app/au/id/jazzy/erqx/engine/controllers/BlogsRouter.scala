@@ -21,7 +21,7 @@ class BlogsRouter @Inject() (components: ControllerComponents, blogs: Blogs, ass
       case (blogConfig, actor) =>
         def blogPath = prefix + blogConfig.path
         val reverseRouter = new BlogReverseRouter(assetsFinder, blogPath, prefix)
-        val router = new BlogRouter(new BlogController(components, actor, reverseRouter))
+        val router = new BlogRouter(new BlogController(components, actor, reverseRouter, blogs.blogRequestCache))
           .withPrefix(blogConfig.path)
         (blogConfig, router, reverseRouter)
     }
