@@ -1,9 +1,10 @@
-@(blog: au.id.jazzy.erqx.engine.models.Blog,
-    router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter,
-    title: Option[String],
-    posts: List[(au.id.jazzy.erqx.engine.models.BlogPost, String)],
-    previous: Option[Call],
-    next: Option[Call])(implicit req: RequestHeader, messages: Messages)
+@import java.util.Date
+@import java.time.ZoneId
+@import au.id.jazzy.erqx.engine.models._
+@import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
+
+@(blog: Blog, router: BlogReverseRouter, title: Option[String], posts: List[(BlogPost, String)],
+    previous: Option[Call], next: Option[Call])(implicit req: RequestHeader, messages: Messages)
 
 @nav(call: Option[Call], text: Html) = {
   @call match {
@@ -35,7 +36,9 @@
   @for((post, content) <- posts) {
     <article>
       <h1 class="postTitle"><a href="@router.view(post)">@post.title</a></h1>
-      <div class="postDate">@messages("blog.posted.date", post.date.toDate)</div>
+      @* The messages use the system default timezone to format messages, so we need to convert this to the system default
+      time zone with the same local time *@
+      <div class="postDate">@messages("blog.posted.date", Date.from(post.date.withZoneSameLocal(ZoneId.systemDefault()).toInstant))</div>
 
       <div class="postContent">
         @Html(content)

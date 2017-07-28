@@ -1,11 +1,13 @@
 package migration
 
-import java.io.{FileWriter, File}
-import scala.xml.{PCData, Elem, XML}
-import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
-import org.joda.time.{DateTime, DateTimeZone}
+import java.io.{File, FileWriter}
+import java.time.{Instant, ZonedDateTime}
+import java.time.format.DateTimeFormatter
+
+import scala.xml.{Elem, PCData, XML}
 import java.util.Locale
-import au.id.jazzy.erqx.engine.models.{Yaml, BlogPost}
+
+import au.id.jazzy.erqx.engine.models.{BlogPost, Yaml}
 
 /**
  * Helper for migrating a pebble blog to this blog
@@ -76,7 +78,7 @@ object MigratePebbleBlog {
       <!-- value used within disqus_identifier; usually internal identifier of article -->
       <dsq:thread_identifier>{post.id}</dsq:thread_identifier>
       <!-- creation date of thread (article), in GMT. Must be YYYY-MM-DD HH:MM:SS 24-hour format. -->
-      <wp:post_date_gmt>{WpDateFormat.print(post.date.toDateTime)}</wp:post_date_gmt>
+      <wp:post_date_gmt>{WpDateFormat.format(post.date)}</wp:post_date_gmt>
       <!-- open/closed values are acceptable -->
       <wp:comment_status>open</wp:comment_status>
 
@@ -101,7 +103,7 @@ object MigratePebbleBlog {
       <!-- author ip address -->
       <wp:comment_author_IP>{comment.ip}</wp:comment_author_IP>
       <!-- comment datetime, in GMT. Must be YYYY-MM-DD HH:MM:SS 24-hour format. -->
-      <wp:comment_date_gmt>{WpDateFormat.print(comment.id)}</wp:comment_date_gmt>
+      <wp:comment_date_gmt>{WpDateFormat.format(Instant.ofEpochMilli(comment.id))}</wp:comment_date_gmt>
       <!-- comment body; use cdata; html allowed (though will be formatted to DISQUS specs) -->
       <wp:comment_content>{PCData(comment.body)}</wp:comment_content>
       <!-- is this comment approved? 0/1 -->
@@ -130,7 +132,7 @@ object MigratePebbleBlog {
   def formatPost(post: BlogPost, body: String): String = {
     val props = Map(
       "title" -> ("\"" + post.title + "\""),
-      "date" -> ISODateTimeFormat.dateTime.print(post.date)
+      "date" -> DateTimeFormatter.ISO_DATE_TIME.format(post.date)
     ) ++ (
       if (post.tags.isEmpty) Map()
       else Map("tags" -> post.tags.map(_.replace(' ', '+')).mkString(" "))
@@ -152,7 +154,7 @@ object MigratePebbleBlog {
 
         val date = parsePostDate(dateStr, timeZone)
         val permalinkTitle = toPermalinkTitle(title)
-        val id = "%04d-%02d-%02d-%s".format(date.year.get, date.monthOfYear.get, date.dayOfMonth.get, permalinkTitle)
+        val id = "%04d-%02d-%02d-%s".format(date.getYear, date.getMonthValue, date.getDayOfMonth, permalinkTitle)
         val path = id + ".html"
         val tags = tagsStr.split(" +").map(_.replace('+', ' ').trim()).toSet.filter(_.nonEmpty)
 
@@ -183,7 +185,7 @@ object MigratePebbleBlog {
         val parent = (xml \ "parent").headOption.map(_.text.toLong)
         val body = (xml \ "body").text
 
-        val id = PebbleDateFormat.parseDateTime(date).getMillis
+        val id = Instant.from(PebbleDateFormat.parse(date)).toEpochMilli
 
         Comment(id, author, email, website, ip, parent, approved, fixupComment(body))
       }
@@ -201,8 +203,8 @@ object MigratePebbleBlog {
       .replaceAll("_*$", "")
   }
 
-  def parsePostDate(date: String, timeZone: String): DateTime = {
-    PebbleDateFormat.parseDateTime(date).toDateTime(DateTimeZone.forID(timeZone))
+  def parsePostDate(date: String, timeZone: String): ZonedDateTime = {
+    ZonedDateTime.from(PebbleDateFormat.parse(date))
   }
 
   def transformPost(post: String) = {
@@ -241,8 +243,8 @@ object MigratePebbleBlog {
     CommentFixer.replaceAllIn(comment, "<$1>")
   }
 
-  val PebbleDateFormat = DateTimeFormat.forPattern("dd MMM yyyy HH:mm:ss:SSS Z")
-  val WpDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+  val PebbleDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss:SSS Z")
+  val WpDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
   def writeFile(file: File, content: String) = {
     val writer = new FileWriter(file)

@@ -1,5 +1,7 @@
-@(blog: au.id.jazzy.erqx.engine.models.Blog,
-  router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter)(implicit req: RequestHeader, messages: Messages)
+@import au.id.jazzy.erqx.engine.models._
+@import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
+
+@(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader, messages: Messages)
 
 @blog.info.theme.main(blog, router, Some(Messages("not.found"))) {
   @messages("not.found.message")

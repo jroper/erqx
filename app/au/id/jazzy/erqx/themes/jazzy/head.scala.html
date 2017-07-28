@@ -1,6 +1,7 @@
-@(blog: au.id.jazzy.erqx.engine.models.Blog,
-  router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter,
-  title: Option[String])(implicit req: RequestHeader)
+@import au.id.jazzy.erqx.engine.models._
+@import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
+
+@(blog: Blog, router: BlogReverseRouter, title: Option[String])(implicit req: RequestHeader)
 
 <base href="@blog.path/"/>
 

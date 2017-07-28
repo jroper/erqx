@@ -53,13 +53,13 @@ object BlogRequestCache {
   */
 private class BlogRequestCache(messagesApi: MessagesApi, lowWatermark: Long, highWatermark: Long, config: GzipFilterConfig)(implicit mat: Materializer) extends Actor with ActorLogging {
 
-  val gzip = new GzipEncoding(config)
+  private val gzip = new GzipEncoding(config)
   import context.dispatcher
 
   import BlogRequestCache._
 
   // An estimate of the response header size
-  val ResponseHeaderSize = 100
+  private val ResponseHeaderSize = 100
 
   // The number of bytes in the cache. This is based on the size of the body, and an approximate guess for the size of
   // each response header
@@ -110,7 +110,10 @@ private class BlogRequestCache(messagesApi: MessagesApi, lowWatermark: Long, hig
         }
 
         val withEtagResult = gzippedResult.map { result =>
-          ResultForKey(cacheKey, result.withHeaders(ETAG -> etag))
+          ResultForKey(cacheKey,
+            result.withHeaders(ETAG -> etag)
+              .withDateHeaders(LAST_MODIFIED -> request.blog.lastUpdated)
+          )
         }
 
         withEtagResult.pipeTo(self)(sender())

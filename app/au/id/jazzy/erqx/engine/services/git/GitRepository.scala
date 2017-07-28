@@ -1,6 +1,7 @@
 package au.id.jazzy.erqx.engine.services.git
 
 import java.io.{File, InputStream}
+import java.time.Instant
 
 import org.eclipse.jgit.lib._
 import org.eclipse.jgit.api.Git
@@ -35,6 +36,13 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
       .getOrElse {
         throw new RuntimeException("Could not find ref \"" + ref + "\" in repository " + gitDir)
       }
+  }
+
+  /**
+    * Get the date of the commit
+    */
+  def commitDate(commitId: String): Instant = {
+    Instant.ofEpochSecond(repository.parseCommit(ObjectId.fromString(commitId)).getCommitTime)
   }
 
   /**

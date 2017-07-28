@@ -1,9 +1,10 @@
 package au.id.jazzy.erqx.engine.services
 
 import java.io.InputStream
+import java.time.{ZoneId, ZonedDateTime}
+
 import scala.io.Source
 import play.api.Logger
-import org.joda.time.DateTime
 import au.id.jazzy.erqx.engine.models._
 
 object MetaDataParser {
@@ -27,8 +28,8 @@ object MetaDataParser {
    * @param name The name of the blog post
    * @return
    */
-  def parsePostFrontMatter(stream: InputStream, path: String, name: String): BlogPost = {
-    val yaml = extractFrontMatter(stream)
+  def parsePostFrontMatter(stream: InputStream, path: String, name: String, timezone: ZoneId): BlogPost = {
+    val yaml = extractFrontMatter(stream, timezone)
 
     val props = Yaml(yaml.map -- Seq("title", "id", "date", "tags"))
     val fTitle = yaml.getString("title")
@@ -49,7 +50,7 @@ object MetaDataParser {
       case NameAttributeExtractor(ToInt(year), ToInt(month), ToInt(day), title) =>
         (
           Some(title.replace('_', ' ')),
-          Some(new DateTime(year, month, day, 0, 0)),
+          Some(ZonedDateTime.of(year, month, day, 0, 0, 0, 0, timezone)),
           title
         )
       case _ => 
@@ -59,7 +60,7 @@ object MetaDataParser {
     
     val id = fId getOrElse nId
     val title = fTitle orElse nTitle getOrElse id
-    val date = fDate orElse nDate getOrElse new DateTime()
+    val date = fDate orElse nDate getOrElse ZonedDateTime.now()
     
     BlogPost(id, path, title, date, permalinkTitle, format, tags.toSet, props)
   }
@@ -71,8 +72,8 @@ object MetaDataParser {
    * @param path The path of the page
    * @param name The name of the page
    */
-  def parsePageFrontMatter(stream: InputStream, path: String, name: String): Page = {
-    val yaml = extractFrontMatter(stream)
+  def parsePageFrontMatter(stream: InputStream, path: String, name: String, timezone: ZoneId): Page = {
+    val yaml = extractFrontMatter(stream, timezone)
 
     val props = Yaml(yaml.map -- Seq("title", "permalink"))
     val title = yaml.getString("title")
@@ -91,7 +92,7 @@ object MetaDataParser {
     Page(permalink, format, path, title, props)
   }
 
-  def extractFrontMatter(stream: InputStream): Yaml = {
+  def extractFrontMatter(stream: InputStream, timezone: ZoneId): Yaml = {
     val lines = Source.fromInputStream(stream).getLines().map(_.trim())
       .dropWhile(_.isEmpty)
 
@@ -99,7 +100,7 @@ object MetaDataParser {
     lines.nextOption match {
       case Some("---") =>
         val frontMatter = lines.takeWhile(_ != "---").mkString("\n")
-        Yaml.parse(frontMatter)
+        Yaml.parse(frontMatter, timezone)
       case _ =>
         Yaml.empty
     }

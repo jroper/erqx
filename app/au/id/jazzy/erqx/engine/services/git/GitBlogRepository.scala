@@ -1,7 +1,10 @@
 package au.id.jazzy.erqx.engine.services.git
 
+import java.time.{ZoneId, ZonedDateTime}
+
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.services.MetaDataParser
+
 import scala.util.control.Exception._
 import play.api.Logger
 import play.api.i18n.Lang
@@ -15,17 +18,20 @@ import scala.util.control.NonFatal
 class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
 
   def loadBlog(id: String, path: String, commitId: String): Blog = {
-    new Blog(id, loadBlogPosts(id, commitId), loadPages(commitId), commitId, path, loadInfo(commitId))
+    val blogInfo = loadInfo(commitId)
+    val lastUpdated = ZonedDateTime.ofInstant(gitRepo.commitDate(commitId), blogInfo.timezone)
+    new Blog(id, loadBlogPosts(id, commitId, blogInfo.timezone),
+      loadPages(commitId, blogInfo.timezone), commitId, path, blogInfo, lastUpdated)
   }
 
-  def loadBlogPosts(id: String, commitId: String): List[BlogPost] = {
+  def loadBlogPosts(id: String, commitId: String, timezone: ZoneId): List[BlogPost] = {
     (gitRepo.listAllFilesInPath(commitId, "_posts").map { files =>
       files.map { file =>
         val path = "_posts/" + file
         val Some(fileLoader) = gitRepo.loadStream(commitId, path)
         val is = fileLoader.openStream()
         try {
-          MetaDataParser.parsePostFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1))
+          MetaDataParser.parsePostFrontMatter(is, path, path.substring(path.lastIndexOf('/') + 1), timezone)
         } catch {
           case NonFatal(e) =>
             throw new RuntimeException(s"Error loading post '$path' from blog '$id'", e)
@@ -36,14 +42,14 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
     } getOrElse Nil).toList
   }
   
-  def loadPages(commitId: String): List[Page] = {
+  def loadPages(commitId: String, timezone: ZoneId): List[Page] = {
     (gitRepo.listAllFilesInPath(commitId, "_pages").map { files =>
       files.map { file =>
         val path = "_pages/" + file
         val Some(fileLoader) = gitRepo.loadStream(commitId, path)
         val is = fileLoader.openStream()
         try {
-          MetaDataParser.parsePageFrontMatter(is, path, file)
+          MetaDataParser.parsePageFrontMatter(is, path, file, timezone)
         } finally {
           is.close()
         }
@@ -52,7 +58,7 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
   }
 
   def loadInfo(commitId: String) = {
-    val config = gitRepo.loadContent(commitId, "_config.yml").map(Yaml.parse).getOrElse(Yaml.empty)
+    val config = gitRepo.loadContent(commitId, "_config.yml").map(Yaml.parse(_, ZoneId.systemDefault())).getOrElse(Yaml.empty)
 
     val theme = config.getString("theme").flatMap { themeClassName =>
       allCatch.either {
@@ -68,6 +74,9 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
       }
     } getOrElse DefaultTheme
 
+    val timezone = config.getString("timezone")
+      .fold(ZoneId.systemDefault())(ZoneId.of)
+
     BlogInfo(
       title = config.getString("title").getOrElse("A blog with no name"),
       subTitle = config.getString("subTitle"),
@@ -76,6 +85,7 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
       description = config.getString("description"),
       footer = config.getString("footer"),
       theme = theme,
+      timezone = timezone,
       properties = config
     )
   }

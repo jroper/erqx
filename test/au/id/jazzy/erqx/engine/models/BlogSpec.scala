@@ -1,8 +1,9 @@
 package au.id.jazzy.erqx.engine.models
 
+import java.time.{ZoneOffset, ZonedDateTime}
+
 import org.specs2.mutable.Specification
 import org.specs2.matcher.Matcher
-import org.joda.time.DateTime
 
 class BlogSpec extends Specification {
 
@@ -59,7 +60,7 @@ class BlogSpec extends Specification {
   }
 
   def post(id: String, year: Int, month: Int, day: Int, tags: String*) =
-    BlogPost(id, id, id, new DateTime(year, month, day, 0, 0), id, "md", Set(tags:_*), Yaml.empty)
-  def blog(posts: BlogPost*) = new Blog("", posts.toList, Nil, "", "", BlogInfo("", None, "", ""))
+    BlogPost(id, id, id, ZonedDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC), id, "md", Set(tags:_*), Yaml.empty)
+  def blog(posts: BlogPost*) = new Blog("", posts.toList, Nil, "", "", BlogInfo("", None, "", ""), ZonedDateTime.now())
 
 }

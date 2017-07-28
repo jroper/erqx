@@ -1,9 +1,11 @@
 package au.id.jazzy.erqx.engine.models
 
-import org.joda.time.DateTime
+import java.time.{ZonedDateTime, ZoneId}
+
 import scala.reflect.ClassTag
 import play.api.Logger
 import java.util.Date
+
 import scala.util.control.NonFatal
 
 case class Yaml(map: Map[String, AnyRef]) {
@@ -11,7 +13,7 @@ case class Yaml(map: Map[String, AnyRef]) {
   def getString(key: String) = getAs[String](key)
   def getInt(key: String) = getAs[Int](key)
   def getBoolean(key: String) = getAs[Boolean](key)
-  def getDate(key: String) = getAs[DateTime](key)
+  def getDate(key: String) = getAs[ZonedDateTime](key)
   def getYamlMap(key: String) = getAs[Yaml](key)
 
   def getMap[T](key: String)(implicit ct: ClassTag[T]): Option[Map[String, T]] = getAs[Yaml](key).map(_.map.filter {
@@ -39,7 +41,7 @@ case class Yaml(map: Map[String, AnyRef]) {
 object Yaml {
   val empty = Yaml(Map())
 
-  def parse(yaml: String) = {
+  def parse(yaml: String, timezone: ZoneId) = {
 
     import scala.collection.JavaConverters._
 
@@ -49,12 +51,11 @@ object Yaml {
       case s: String => s
       case n: Number => n
       case b: java.lang.Boolean => b
-      case d: Date => new DateTime(d)
+      case d: Date => ZonedDateTime.ofInstant(d.toInstant, timezone)
       case null => null
-      case other => {
+      case other =>
         Logger.warn("Unexpected YAML object of type " + other.getClass)
         other.toString
-      }
     }
 
     try {

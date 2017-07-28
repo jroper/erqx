@@ -122,6 +122,10 @@ The config file contains the main properties for the blog post.  For example:
     # The theme to use, if not specified uses the default theme.
     # theme: au.id.jazzy.erqx.engine.models.DefaultTheme$
 
+    # The timezone to use for all parsed dates. Defaults to system
+    # timezone if not specified.
+    # timezone: Canberra/Australia
+
     # Other arbitrary properties may go here that may be used by the theme.
 
     # The default theme allows specifying a disqus id:

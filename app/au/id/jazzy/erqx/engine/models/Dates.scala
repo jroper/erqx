@@ -1,14 +1,11 @@
 package au.id.jazzy.erqx.engine.models
 
-import org.joda.time.YearMonth
+import java.time.YearMonth
+import java.time.format.TextStyle
+
 import scala.collection.SortedMap
 import scala.util.control.Exception._
-import org.joda.time.format.DateTimeFormat
 import play.api.i18n.Lang
-
-object PostDate {
-  val dateFormat = DateTimeFormat.forPattern("d MMMM yyyy")
-}
 
 /**
  * A day that has published blog posts
@@ -41,9 +38,9 @@ final case class Month(year: Int, month: Int, days: SortedMap[Int, Day], posts: 
    */
   def forDay(day: Int): Day = days.getOrElse(day, Day(year, month, day, Nil))
 
-  private lazy val partial = allCatch.opt(new YearMonth(year, month))
+  private lazy val partial = allCatch.opt(YearMonth.of(year, month))
 
-  def name(implicit lang: Lang) = partial.map(_.monthOfYear.getAsText(lang.toLocale)).getOrElse("Unknown")
+  def name(implicit lang: Lang) = partial.map(_.getMonth.getDisplayName(TextStyle.FULL, lang.toLocale)).getOrElse("Unknown")
 
   val orderKey = year * 12 + month
 }

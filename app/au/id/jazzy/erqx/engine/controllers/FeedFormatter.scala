@@ -1,16 +1,15 @@
 package au.id.jazzy.erqx.engine.controllers
 
-import scala.xml.{PCData, Elem}
+import java.time.format.DateTimeFormatter
+
+import scala.xml.{Elem, PCData}
 import play.api.mvc.RequestHeader
-import org.joda.time.format.ISODateTimeFormat
 import au.id.jazzy.erqx.engine.models._
-import org.joda.time.DateTime
 
 object FeedFormatter {
   def atom(blog: Blog, posts: List[(BlogPost, String)], router: BlogReverseRouter)(implicit req: RequestHeader): Elem = {
 
-    // Use the current time as the update date if there are no blog posts.
-    val blogUpdate = ISODateTimeFormat.dateTime.print(blog.posts.headOption.fold(new DateTime()){_.date})
+    val blogUpdate = DateTimeFormatter.ISO_DATE_TIME.format(blog.lastUpdated)
 
     <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
       <title>{blog.info.title}</title>
@@ -28,7 +27,7 @@ object FeedFormatter {
       <dc:rights>{blog.info.author}</dc:rights>
       {posts.map {
         case (post, content) =>
-          val postDate = ISODateTimeFormat.dateTime.print(post.date)
+          val postDate = DateTimeFormatter.ISO_DATE_TIME.format(post.date)
 
           <entry>
             <title>{post.title}</title>

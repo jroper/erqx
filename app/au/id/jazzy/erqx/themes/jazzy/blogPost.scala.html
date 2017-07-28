@@ -1,7 +1,9 @@
-@(blog: au.id.jazzy.erqx.engine.models.Blog,
-    router: au.id.jazzy.erqx.engine.controllers.BlogReverseRouter,
-    post: au.id.jazzy.erqx.engine.models.BlogPost,
-    content: String)(implicit req: RequestHeader, messages: Messages)
+@import java.util.Date
+@import java.time.ZoneId
+@import au.id.jazzy.erqx.engine.models._
+@import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
+
+@(blog: Blog, router: BlogReverseRouter, post: BlogPost, content: String)(implicit req: RequestHeader, messages: Messages)
 
 @blog.info.theme.main(blog, router, Some(post.title)) {
   <article>
@@ -9,7 +11,9 @@
 
     @Html(content)
 
-    <div class="postDate">@Messages("blog.posted.date", post.date.toDate)</div>
+    @* The messages use the system default timezone to format messages, so we need to convert this to the system default
+       time zone with the same local time *@
+    <div class="postDate">@Messages("blog.posted.date", Date.from(post.date.withZoneSameLocal(ZoneId.systemDefault()).toInstant))</div>
     <ul class="tags">
     @for(tag <- post.tags) {
       <li><a href="@router.tag(tag)">@tag</a></li>

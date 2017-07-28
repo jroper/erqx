@@ -1,5 +1,7 @@
 package au.id.jazzy.erqx.engine.models
 
+import java.time.{ZoneId, ZonedDateTime}
+
 import play.api.i18n.Messages
 
 import scala.collection.SortedMap
@@ -18,6 +20,7 @@ case class BlogInfo(title: String,
                     description: Option[String] = None,
                     footer: Option[String] = None,
                     theme: BlogTheme = DefaultTheme,
+                    timezone: ZoneId = ZoneId.systemDefault(),
                     properties: Yaml = Yaml.empty)
 
 trait BlogTheme {
@@ -101,7 +104,7 @@ object DefaultTheme extends BlogTheme {
  * @param hash The current hash of the repository at which point these blog posts were loaded from
  * @param path The path of the blog.  Does not end with "/", may be blank.
  */
-final class Blog(val id: String, blogPosts: List[BlogPost], pages: List[Page], val hash: String = "", val path: String, val info: BlogInfo) {
+final class Blog(val id: String, blogPosts: List[BlogPost], pages: List[Page], val hash: String = "", val path: String, val info: BlogInfo, val lastUpdated: ZonedDateTime) {
 
   /**
    * Blog posts are always listed in reverse chronological order, so we sort them and then reverse them
@@ -116,15 +119,15 @@ final class Blog(val id: String, blogPosts: List[BlogPost], pages: List[Page], v
   val years: List[Year] = {
     // Because this is based on sorted, the posts within the years/months/days should also be sorted
     // because groupBy is stable
-    sorted.groupBy(_.date.year.get).map { byYear =>
+    sorted.groupBy(_.date.getYear).map { byYear =>
       val (year, yearPosts) = byYear
       
       // Create months map
-      val months = SortedMap.empty[Int, Month] ++ yearPosts.groupBy(_.date.monthOfYear.get).map { byMonth =>
+      val months = SortedMap.empty[Int, Month] ++ yearPosts.groupBy(_.date.getMonthValue).map { byMonth =>
         val (month, monthPosts) = byMonth
         
         // Create days map
-        val days = SortedMap.empty[Int, Day] ++ monthPosts.groupBy(_.date.dayOfMonth.get).map { byDay =>
+        val days = SortedMap.empty[Int, Day] ++ monthPosts.groupBy(_.date.getDayOfMonth).map { byDay =>
           val (day, dayPosts) = byDay
           
           day -> Day(year, month, day, dayPosts)
