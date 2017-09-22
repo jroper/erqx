@@ -60,7 +60,7 @@ lazy val minimal = project.in(file("samples/minimal"))
 // Concatinate erqx theme assets
 Concat.groups := Seq(
   "erqx-jazzy-theme.css" -> group(Seq("lib/bootstrap/css/bootstrap.min.css", "main.min.css", "lib/prettify/prettify.css")),
-  "erqx-jazzy-theme.js" -> group(Seq("lib/jquery/jquery.js", "lib/prettify/prettify.js", "lib/prettify/lang-scala.js", "lib/retinajs/retina.js"))
+  "erqx-jazzy-theme.js" -> group(Seq("lib/jquery/jquery.min.js", "lib/prettify/prettify.js", "lib/prettify/lang-scala.js", "lib/retinajs/retina.js"))
 )
 
 pipelineStages in Assets := Seq(concat)
