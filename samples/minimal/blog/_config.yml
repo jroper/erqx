@@ -23,3 +23,6 @@ description: |
 
 # The default theme allows specifying a disqus id:
 # disqus_shortname: mydisqusblog
+
+# The expiry time to put on assets served from the blog repo.
+assetsExpiry: 365 days

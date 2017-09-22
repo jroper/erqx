@@ -31,3 +31,6 @@ This pulls the code from the location `_code/firstpost/src/test/scala/Foo.scala`
 
 There is also an SBT build file in `_code/firstpost/build.sbt`, so when running `sbt test` in the `_code/firstpost` directory, it compiles and tests the code snippet, ensuring that all the code in the blog post compiles.
 
+Here is an example image:
+
+![Play logo](images/play_full_color.png)
