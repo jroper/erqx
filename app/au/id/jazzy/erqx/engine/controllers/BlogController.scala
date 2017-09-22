@@ -73,7 +73,19 @@ class BlogController(components: ControllerComponents, blogActor: ActorSelection
       (blogActor ? LoadStream(req.blog, path)).mapTo[Option[HttpEntity]].flatMap {
         case Some(entity) =>
           val withContentType = components.fileMimeTypes.forFileName(path).fold(entity)(entity.as)
-          sync(Ok.sendEntity(withContentType))
+          val result = Ok.sendEntity(withContentType)
+
+          val withCacheControl = req.blog.info.assetsExpiry match {
+            case Some(Duration.Inf) => result.withHeaders(
+              CACHE_CONTROL -> "public, immutable"
+            )
+            case Some(duration) => result.withHeaders(
+              CACHE_CONTROL -> s"public, max-age=${duration.toSeconds}"
+            )
+            case None => result
+          }
+
+          sync(withCacheControl)
 
         case None =>
           // Otherwise see if there's a dynamic page

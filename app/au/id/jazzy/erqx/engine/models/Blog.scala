@@ -10,6 +10,8 @@ import play.twirl.api.Html
 import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
 import au.id.jazzy.erqx.engine.ErqxBuild
 
+import scala.concurrent.duration.Duration
+
 /**
  * Information about a blog
  */
@@ -21,7 +23,8 @@ case class BlogInfo(title: String,
                     footer: Option[String] = None,
                     theme: BlogTheme = DefaultTheme,
                     timezone: ZoneId = ZoneId.systemDefault(),
-                    properties: Yaml = Yaml.empty)
+                    properties: Yaml = Yaml.empty,
+                    assetsExpiry: Option[Duration] = None)
 
 trait BlogTheme {
   /**

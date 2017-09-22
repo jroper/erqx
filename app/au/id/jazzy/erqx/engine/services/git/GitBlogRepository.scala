@@ -10,6 +10,7 @@ import play.api.Logger
 import play.api.i18n.Lang
 import au.id.jazzy.erqx.engine.models.BlogInfo
 
+import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 
 /**
@@ -18,7 +19,7 @@ import scala.util.control.NonFatal
 class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
 
   def loadBlog(id: String, path: String, commitId: String): Blog = {
-    val blogInfo = loadInfo(commitId)
+    val blogInfo = loadInfo(id, commitId)
     val lastUpdated = ZonedDateTime.ofInstant(gitRepo.commitDate(commitId), blogInfo.timezone)
     new Blog(id, loadBlogPosts(id, commitId, blogInfo.timezone),
       loadPages(commitId, blogInfo.timezone), commitId, path, blogInfo, lastUpdated)
@@ -57,7 +58,7 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
     } getOrElse Nil).toList    
   }
 
-  def loadInfo(commitId: String) = {
+  private def loadInfo(blogId: String, commitId: String) = {
     val config = gitRepo.loadContent(commitId, "_config.yml").map(Yaml.parse(_, ZoneId.systemDefault())).getOrElse(Yaml.empty)
 
     val theme = config.getString("theme").flatMap { themeClassName =>
@@ -69,7 +70,7 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
       } match {
         case Right(t) => Some(t)
         case Left(e) =>
-          Logger.warn("Unable to load theme", e)
+          Logger.warn(s"Unable to load theme for blog $blogId", e)
           None
       }
     } getOrElse DefaultTheme
@@ -86,7 +87,16 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
       footer = config.getString("footer"),
       theme = theme,
       timezone = timezone,
-      properties = config
+      properties = config,
+      assetsExpiry = config.getString("assetsExpiry").flatMap { duration =>
+        try {
+          Some(Duration(duration))
+        } catch {
+          case NonFatal(t) =>
+            Logger.warn(s"Unable to parse assetsExpiry '$duration' for blog $blogId", t)
+            None
+        }
+      }
     )
   }
 
