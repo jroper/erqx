@@ -8,7 +8,6 @@ LessKeys.compress := true
 
 bintrayRepository := "maven"
 bintrayPackage := "erqx"
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
 releaseCrossBuild := true
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
