@@ -27,20 +27,20 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
 
   def messages(key: String, args: Any*)(implicit rh: RequestHeader) = messagesApi.preferred(rh).apply(key, args: _*)
 
-  def index(page: Page) = BlogActionWithPushes.async { implicit req =>
+  def index(page: Page): Action[Unit] = BlogActionWithPushes.async { implicit req =>
     paged(req.blog.posts, page, None)(router.index)
   }
 
-  def year(year: Int, page: Page) = BlogActionWithPushes.async { implicit req =>
+  def year(year: Int, page: Page): Action[Unit] = BlogActionWithPushes.async { implicit req =>
     paged(req.blog.forYear(year).posts, page, Some(messages("posts.by.year", year)))(p => router.year(year, p))
   }
 
-  def month(year: Int, month: Int, page: Page) = BlogActionWithPushes.async { implicit req =>
+  def month(year: Int, month: Int, page: Page): Action[Unit] = BlogActionWithPushes.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
     paged(byMonth.posts, page, Some(messages("posts.by.month", year, byMonth.name)))(p => router.month(year, month, p))
   }
 
-  def day(year: Int, month: Int, day: Int, page: Page) = BlogActionWithPushes.async { implicit req =>
+  def day(year: Int, month: Int, day: Int, page: Page): Action[Unit] = BlogActionWithPushes.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
     val byDay = byMonth.forDay(day)
     paged(byDay.posts, page,
@@ -48,11 +48,11 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
     )(p => router.day(year, month, day, p))
   }
 
-  def tag(tag: String, page: Page) = BlogActionWithPushes.async { implicit req =>
+  def tag(tag: String, page: Page): Action[Unit] = BlogActionWithPushes.async { implicit req =>
     paged(req.blog.forTag(tag).getOrElse(Nil), page, Some(messages("posts.by.tag", tag)))(p => router.tag(tag, p))
   }
 
-  def view(year: Int, month: Int, day: Int, permalink: String) = BlogActionWithPushes.async { implicit req =>
+  def view(year: Int, month: Int, day: Int, permalink: String): Action[Unit] = BlogActionWithPushes.async { implicit req =>
     req.blog.forYear(year).forMonth(month).forDay(day).forPermalink(permalink) match {
       case Some(post) =>
         (blogActor ? RenderPost(req.blog, post)).mapTo[Option[String]].map {
@@ -64,7 +64,7 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
     }
   }
 
-  def asset(p: String) = BlogAction.async { implicit req =>
+  def asset(p: String): Action[Unit] = BlogAction.async { implicit req =>
     val path = new File("/" + p).getCanonicalPath.drop(1)
     if (path.startsWith("_")) {
       sync(notFound(req.blog))
@@ -104,7 +104,7 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
   }
 
   def paged[A](allPosts: List[BlogPost], p: Page, title: Option[String])
-           (route: (Page) => Call)(implicit req: BlogRequest[A]) = {
+           (route: Page => Call)(implicit req: BlogRequest[A]): Future[Result] = {
     val page = p.page.max(1)
     val perPage = p.perPage.max(1).min(Page.MaxPageSize)
 
@@ -125,7 +125,7 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
     }
   }
 
-  def atom = BlogAction.async { implicit req =>
+  def atom: Action[Unit] = BlogAction.async { implicit req =>
     val posts = req.blog.posts.take(5)
     val absoluteUri = router.index().absoluteURL()
     Future.sequence(posts.map { post =>
@@ -135,7 +135,7 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
     }
   }
 
-  def fetch(key: String) = Action.async { implicit req =>
+  def fetch(key: String): Action[AnyContent] = Action.async { implicit req =>
     (blogActor ? Fetch(key)) map {
       case FetchAccepted => Ok
       case FetchRejected => Forbidden
@@ -149,10 +149,10 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
    */
   private object BlogAction extends ActionBuilder[BlogRequest, Unit] {
 
-    override val parser = components.parsers.empty
-    override protected def executionContext = components.executionContext
+    override val parser: BodyParser[Unit] = components.parsers.empty
+    override protected def executionContext: ExecutionContext = components.executionContext
 
-    override def invokeBlock[A](request: Request[A], block: (BlogRequest[A]) => Future[Result]) = {
+    override def invokeBlock[A](request: Request[A], block: BlogRequest[A] => Future[Result]): Future[Result] = {
       (blogActor ? GetBlog).mapTo[Blog].flatMap { blog =>
         (blogRequestCache ? BlogRequestCache.ExecuteRequest(
           new BlogRequest(request, blog), block
@@ -166,14 +166,20 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
     */
   private object WithPushes extends ActionFunction[BlogRequest, BlogRequest] {
 
-    override protected def executionContext = components.executionContext
+    override protected def executionContext: ExecutionContext = components.executionContext
 
-    override def invokeBlock[A](request: BlogRequest[A], block: (BlogRequest[A]) => Future[Result]) = {
+    override def invokeBlock[A](request: BlogRequest[A], block: BlogRequest[A] => Future[Result]): Future[Result] = {
       block(request).map { result =>
-        val preload = request.blog.info.theme.pushAssets(request.blog, router)
-          .map(asset => s"<${asset.asset.url}>; rel=preload; as=${asset.as}")
-          .mkString(", ")
-        result.withHeaders(LINK -> preload)
+        request.cookies.get(serverPush.cookie).filter(_.value == request.blog.info.theme.hash) match {
+          case None =>
+            val preload = request.blog.info.theme.pushAssets(request.blog, router)
+              .map(asset => s"<${asset.asset.url}>; rel=preload; as=${asset.as}")
+              .mkString(", ")
+            result.withHeaders(LINK -> preload)
+              .withCookies(Cookie(serverPush.cookie, request.blog.info.theme.hash))
+          case Some(_) =>
+            result
+        }
       }
     }
 
@@ -187,7 +193,7 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
 }
 
 object BlogController {
-  val startTime = System.currentTimeMillis()
+  val startTime: Long = System.currentTimeMillis()
 }
 
 class BlogRequest[A](request: Request[A], val blog: Blog) extends WrappedRequest[A](request)

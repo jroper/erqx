@@ -49,7 +49,7 @@ object CacheConfig {
   }
 }
 
-case class ServerPush(method: ServerPushMethod)
+case class ServerPush(method: ServerPushMethod, cookie: String)
 
 object ServerPush {
   def fromConfig(config: Configuration): ServerPush = {
@@ -57,7 +57,8 @@ object ServerPush {
       config.get[String]("method") match {
         case "none" => ServerPushMethod.None
         case "link" => ServerPushMethod.Link
-      }
+      },
+      config.get[String]("cookie")
     )
   }
 }
