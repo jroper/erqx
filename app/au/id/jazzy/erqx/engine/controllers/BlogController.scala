@@ -147,17 +147,25 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
   /**
    * Action builder for blog requests. Loads the current blog, as well as handles etag caching headers
    */
-  private object BlogAction extends ActionBuilder[BlogRequest, Unit] {
+  private object UncachedBlogAction extends ActionBuilder[BlogRequest, Unit] {
 
     override val parser: BodyParser[Unit] = components.parsers.empty
     override protected def executionContext: ExecutionContext = components.executionContext
 
     override def invokeBlock[A](request: Request[A], block: BlogRequest[A] => Future[Result]): Future[Result] = {
       (blogActor ? GetBlog).mapTo[Blog].flatMap { blog =>
-        (blogRequestCache ? BlogRequestCache.ExecuteRequest(
-          new BlogRequest(request, blog), block
-        )).mapTo[Result]
+        block(new BlogRequest(request, blog))
       }
+    }
+  }
+
+  private val BlogAction = UncachedBlogAction.andThen(Cached)
+
+  private object Cached extends ActionFunction[BlogRequest, BlogRequest] {
+    override protected def executionContext: ExecutionContext = components.executionContext
+
+    override def invokeBlock[A](request: BlogRequest[A], block: BlogRequest[A] => Future[Result]): Future[Result] = {
+      (blogRequestCache ? BlogRequestCache.ExecuteRequest(request, block)).mapTo[Result]
     }
   }
 
@@ -186,7 +194,7 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
   }
 
   private val BlogActionWithPushes = serverPush.method match {
-    case ServerPushMethod.Link => BlogAction.andThen(WithPushes)
+    case ServerPushMethod.Link => UncachedBlogAction.andThen(WithPushes).andThen(Cached)
     case ServerPushMethod.None => BlogAction
   }
 
