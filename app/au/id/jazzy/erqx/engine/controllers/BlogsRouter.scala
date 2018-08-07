@@ -11,7 +11,8 @@ import au.id.jazzy.erqx.engine.models._
 import controllers.{Assets, AssetsFinder}
 
 @Singleton
-class BlogsRouter @Inject() (components: ControllerComponents, blogs: Blogs, assets: Assets, assetsFinder: AssetsFinder) extends SimpleRouter {
+class BlogsRouter @Inject() (components: ControllerComponents, blogs: Blogs, assets: Assets, assetsFinder: AssetsFinder,
+  erqxConfig: ErqxConfig) extends SimpleRouter {
 
   // We have to keep a reference to the prefix for the reverse routers
   private var prefix = ""
@@ -21,7 +22,7 @@ class BlogsRouter @Inject() (components: ControllerComponents, blogs: Blogs, ass
       case (blogConfig, actor) =>
         def blogPath = prefix + blogConfig.path
         val reverseRouter = new BlogReverseRouter(assetsFinder, blogPath, prefix)
-        val router = new BlogRouter(new BlogController(components, actor, reverseRouter, blogs.blogRequestCache))
+        val router = new BlogRouter(new BlogController(components, actor, reverseRouter, blogs.blogRequestCache, erqxConfig.serverPush))
           .withPrefix(blogConfig.path)
         (blogConfig, router, reverseRouter)
     }

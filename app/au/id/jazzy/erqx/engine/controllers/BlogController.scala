@@ -1,10 +1,10 @@
 package au.id.jazzy.erqx.engine.controllers
 
-import akka.actor.{ActorRef, ActorSelection}
+import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.Future.{successful => sync}
 import scala.concurrent.duration._
 import play.api.mvc._
@@ -16,31 +16,31 @@ import au.id.jazzy.erqx.engine.actors.BlogRequestCache
 import play.api.http.HttpEntity
 import play.api.i18n.{I18nSupport, Lang, Messages}
 
-class BlogController(components: ControllerComponents, blogActor: ActorSelection, router: BlogReverseRouter,
-  blogRequestCache: ActorRef)
+class BlogController(components: ControllerComponents, blogActor: ActorRef, router: BlogReverseRouter,
+  blogRequestCache: ActorRef, serverPush: ServerPush)
 
   extends AbstractController(components) with I18nSupport {
 
-  implicit val defaultTimeout = Timeout(5.seconds)
-  implicit def langFromMessages(implicit messages: Messages): Lang = messages.lang
-  implicit val ec = components.executionContext
+  private implicit val defaultTimeout: Timeout = Timeout(5.seconds)
+  private implicit def langFromMessages(implicit messages: Messages): Lang = messages.lang
+  private implicit val ec: ExecutionContext = components.executionContext
 
   def messages(key: String, args: Any*)(implicit rh: RequestHeader) = messagesApi.preferred(rh).apply(key, args: _*)
 
-  def index(page: Page) = BlogAction.async { implicit req =>
+  def index(page: Page) = BlogActionWithPushes.async { implicit req =>
     paged(req.blog.posts, page, None)(router.index)
   }
 
-  def year(year: Int, page: Page) = BlogAction.async { implicit req =>
+  def year(year: Int, page: Page) = BlogActionWithPushes.async { implicit req =>
     paged(req.blog.forYear(year).posts, page, Some(messages("posts.by.year", year)))(p => router.year(year, p))
   }
 
-  def month(year: Int, month: Int, page: Page) = BlogAction.async { implicit req =>
+  def month(year: Int, month: Int, page: Page) = BlogActionWithPushes.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
     paged(byMonth.posts, page, Some(messages("posts.by.month", year, byMonth.name)))(p => router.month(year, month, p))
   }
 
-  def day(year: Int, month: Int, day: Int, page: Page) = BlogAction.async { implicit req =>
+  def day(year: Int, month: Int, day: Int, page: Page) = BlogActionWithPushes.async { implicit req =>
     val byMonth = req.blog.forYear(year).forMonth(month)
     val byDay = byMonth.forDay(day)
     paged(byDay.posts, page,
@@ -48,11 +48,11 @@ class BlogController(components: ControllerComponents, blogActor: ActorSelection
     )(p => router.day(year, month, day, p))
   }
 
-  def tag(tag: String, page: Page) = BlogAction.async { implicit req =>
+  def tag(tag: String, page: Page) = BlogActionWithPushes.async { implicit req =>
     paged(req.blog.forTag(tag).getOrElse(Nil), page, Some(messages("posts.by.tag", tag)))(p => router.tag(tag, p))
   }
 
-  def view(year: Int, month: Int, day: Int, permalink: String) = BlogAction.async { implicit req =>
+  def view(year: Int, month: Int, day: Int, permalink: String) = BlogActionWithPushes.async { implicit req =>
     req.blog.forYear(year).forMonth(month).forDay(day).forPermalink(permalink) match {
       case Some(post) =>
         (blogActor ? RenderPost(req.blog, post)).mapTo[Option[String]].map {
@@ -147,12 +147,12 @@ class BlogController(components: ControllerComponents, blogActor: ActorSelection
   /**
    * Action builder for blog requests. Loads the current blog, as well as handles etag caching headers
    */
-  object BlogAction extends ActionBuilder[BlogRequest, Unit] {
+  private object BlogAction extends ActionBuilder[BlogRequest, Unit] {
 
     override val parser = components.parsers.empty
     override protected def executionContext = components.executionContext
 
-    def invokeBlock[A](request: Request[A], block: (BlogRequest[A]) => Future[Result]) = {
+    override def invokeBlock[A](request: Request[A], block: (BlogRequest[A]) => Future[Result]) = {
       (blogActor ? GetBlog).mapTo[Blog].flatMap { blog =>
         (blogRequestCache ? BlogRequestCache.ExecuteRequest(
           new BlogRequest(request, blog), block
@@ -160,6 +160,30 @@ class BlogController(components: ControllerComponents, blogActor: ActorSelection
       }
     }
   }
+
+  /**
+    * Adds push support
+    */
+  private object WithPushes extends ActionFunction[BlogRequest, BlogRequest] {
+
+    override protected def executionContext = components.executionContext
+
+    override def invokeBlock[A](request: BlogRequest[A], block: (BlogRequest[A]) => Future[Result]) = {
+      block(request).map { result =>
+        val preload = request.blog.info.theme.pushAssets(request.blog, router)
+          .map(asset => s"<${asset.asset.url}>; rel=preload; as=${asset.as}")
+          .mkString(", ")
+        result.withHeaders(LINK -> preload)
+      }
+    }
+
+  }
+
+  private val BlogActionWithPushes = serverPush.method match {
+    case ServerPushMethod.Link => BlogAction.andThen(WithPushes)
+    case ServerPushMethod.None => BlogAction
+  }
+
 }
 
 object BlogController {

@@ -89,7 +89,22 @@ trait BlogTheme {
   def footer(blog: Blog, router: BlogReverseRouter)(implicit req: RequestHeader, messages: Messages): Html =
     au.id.jazzy.erqx.themes.jazzy.html.footer(blog, router)
 
+  /**
+    * Assets to push via an HTTP2 server push.
+    */
+  def pushAssets(blog: Blog, router: BlogReverseRouter): Seq[PushAsset] = Seq(
+    PushAsset(router.webJarAsset("erqx-engine/erqx-jazzy-theme.css"), "style"),
+    PushAsset(router.webJarAsset("erqx-engine/erqx-icon.ico"), "image"),
+    PushAsset(router.webJarAsset("erqx-engine/erqx-jazzy-theme.js"), "script")
+  )
 }
+
+/**
+  * A psuhed asset.
+  * @param asset
+  * @param as
+  */
+case class PushAsset(asset: Call, as: String)
 
 /**
  * The default theme

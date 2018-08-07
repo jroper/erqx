@@ -14,6 +14,7 @@ import play.api.http.{HttpEntity, Status}
 import play.api.libs.streams.GzipFlow
 import play.filters.gzip.GzipFilterConfig
 import akka.pattern.pipe
+import au.id.jazzy.erqx.engine.models.CacheConfig
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,8 +41,8 @@ object BlogRequestCache {
     }
   }
 
-  def props(messagesApi: MessagesApi, lowWatermark: Long, highWatermark: Long, config: GzipFilterConfig)(implicit mat: Materializer): Props = {
-    Props(new BlogRequestCache(messagesApi, lowWatermark, highWatermark, config))
+  def props(messagesApi: MessagesApi, cacheConfig: CacheConfig, gzipConfig: GzipFilterConfig)(implicit mat: Materializer): Props = {
+    Props(new BlogRequestCache(messagesApi, cacheConfig, gzipConfig))
   }
 }
 
@@ -51,9 +52,11 @@ object BlogRequestCache {
   * @param lowWatermark When entries from the cache are expired, it will be drained to this value.
   * @param highWatermark When the cache reaches this size, it will be drained to the low water mark.
   */
-private class BlogRequestCache(messagesApi: MessagesApi, lowWatermark: Long, highWatermark: Long, config: GzipFilterConfig)(implicit mat: Materializer) extends Actor with ActorLogging {
+private class BlogRequestCache(messagesApi: MessagesApi, cacheConfig: CacheConfig, gzipConfig: GzipFilterConfig)(implicit mat: Materializer) extends Actor with ActorLogging {
 
-  private val gzip = new GzipEncoding(config)
+  private val gzip = new GzipEncoding(gzipConfig)
+  private val lowWatermark = cacheConfig.lowWatermark.toBytes
+  private val highWatermark = cacheConfig.highWatermark.toBytes
   import context.dispatcher
 
   import BlogRequestCache._

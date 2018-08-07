@@ -1,52 +1,26 @@
 package au.id.jazzy.erqx.engine
 
-import java.io.File
 import javax.inject.{Inject, Singleton}
-
-import akka.actor.{ActorSelection, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.stream.Materializer
-import au.id.jazzy.erqx.engine.actors.{BlogRequestCache, BlogsActor}
-import au.id.jazzy.erqx.engine.models.{BlogConfig, GitConfig}
-import com.typesafe.config.ConfigMemorySize
+import au.id.jazzy.erqx.engine.actors.{BlogActor, BlogRequestCache}
+import au.id.jazzy.erqx.engine.models.{BlogConfig, ErqxConfig}
 import play.api.i18n.MessagesApi
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Environment, Logger}
 import play.filters.gzip.GzipFilterConfig
-
-import scala.concurrent.duration.FiniteDuration
 
 /**
  * Loads all the blogs.
  */
 @Singleton
-class Blogs @Inject() (environment: Environment, configuration: Configuration, system: ActorSystem,
+class Blogs @Inject() (environment: Environment, erqxConfig: ErqxConfig, system: ActorSystem,
   messagesApi: MessagesApi, gzipFilterConfig: GzipFilterConfig)(implicit mat: Materializer) {
 
-  lazy val blogs: Seq[(BlogConfig, ActorSelection)] = {
-
-    val blogConfigs = configuration.getPrototypedMap("blogs", "erqx.blogs.prototype").map {
-      case (name, blogConfig) =>
-        val path = blogConfig.get[String]("path")
-        val gitConfig = blogConfig.get[Configuration]("gitConfig")
-        val order = blogConfig.get[Int]("order")
-
-        BlogConfig(name, path,
-          GitConfig(
-            name,
-            new File(gitConfig.get[String]("gitRepo")),
-            gitConfig.get[Option[String]]("path"),
-            gitConfig.get[String]("branch"),
-            gitConfig.get[Option[String]]("remote"),
-            gitConfig.get[Option[String]]("fetchKey"),
-            gitConfig.get[Option[FiniteDuration]]("updateInterval")
-          ),
-          order
-        )
-    }.toList.sortBy(_.order)
-
+  lazy val blogs: Seq[(BlogConfig, ActorRef)] = {
     val blogs = {
-      val blogsActor = system.actorOf(Props(new BlogsActor(blogConfigs, environment.classLoader)), "blogs")
-      blogConfigs.map { config =>
-        config -> system.actorSelection(blogsActor.path / config.name)
+      erqxConfig.blogs.map { config =>
+        val actor = system.actorOf(Props(new BlogActor(config.gitConfig, config.path, environment.classLoader)), "blog-" + config.name)
+        config -> actor
       }
     }
 
@@ -59,10 +33,8 @@ class Blogs @Inject() (environment: Environment, configuration: Configuration, s
     sorted
   }
 
-  lazy val blogRequestCache = {
-    val lowWatermark = configuration.get[ConfigMemorySize]("erqx.cache.low-watermark")
-    val highWatermark = configuration.get[ConfigMemorySize]("erqx.cache.high-watermark")
-    system.actorOf(BlogRequestCache.props(messagesApi, lowWatermark.toBytes, highWatermark.toBytes, gzipFilterConfig), "blog-request-cache")
+  lazy val blogRequestCache: ActorRef = {
+    system.actorOf(BlogRequestCache.props(messagesApi, erqxConfig.cache, gzipFilterConfig), "blogs-request-cache")
   }
 
 }

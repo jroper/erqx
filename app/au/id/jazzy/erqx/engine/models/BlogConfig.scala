@@ -2,6 +2,8 @@ package au.id.jazzy.erqx.engine.models
 
 import java.io.File
 
+import play.api.Configuration
+
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -13,6 +15,17 @@ case class BlogConfig(
   gitConfig: GitConfig,
   order: Int
 )
+
+object BlogConfig {
+  def fromConfig(name: String, config: Configuration): BlogConfig = {
+    BlogConfig(
+      name,
+      config.get[String]("path"),
+      GitConfig.fromConfig(name, config.get[Configuration]("gitConfig")),
+      config.get[Int]("order")
+    )
+  }
+}
 
 /**
  * Git config
@@ -26,3 +39,17 @@ case class GitConfig(
   fetchKey: Option[String],
   updateInterval: Option[FiniteDuration]
 )
+
+object GitConfig {
+  def fromConfig(name: String, config: Configuration): GitConfig = {
+    GitConfig(
+      name,
+      new File(config.get[String]("gitRepo")),
+      config.get[Option[String]]("path"),
+      config.get[String]("branch"),
+      config.get[Option[String]]("remote"),
+      config.get[Option[String]]("fetchKey"),
+      config.get[Option[FiniteDuration]]("updateInterval")
+    )
+  }
+}
