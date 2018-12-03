@@ -1,5 +1,5 @@
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.16")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.0-RC8")
 addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.1.2")
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.9")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.10")
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
-addSbtPlugin("net.ground5hark.sbt" % "sbt-concat" % "0.1.9")
+addSbtPlugin("net.ground5hark.sbt" % "sbt-concat" % "0.2.0")

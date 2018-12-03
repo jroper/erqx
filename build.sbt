@@ -1,3 +1,5 @@
+import scala.sys.process._
+
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)
 
@@ -11,14 +13,14 @@ bintrayPackage := "erqx"
 releaseCrossBuild := true
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-scalaVersion := "2.12.6"
-crossScalaVersions := Seq("2.11.12", "2.12.6")
+scalaVersion := "2.12.7"
+crossScalaVersions := Seq("2.11.12", "2.12.7")
 
 // Production dependencies
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-doc" % "1.8.1",
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r",
-  "org.yaml" % "snakeyaml" % "1.12"
+  "com.typesafe.play" %% "play-doc" % "1.8.2",
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "5.1.3.201810200350-r",
+  "org.yaml" % "snakeyaml" % "1.23"
 )
 
 // Web dependencies
