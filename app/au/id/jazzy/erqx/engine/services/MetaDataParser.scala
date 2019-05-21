@@ -4,15 +4,17 @@ import java.io.InputStream
 import java.time.{ZoneId, ZonedDateTime}
 
 import scala.io.Source
-import play.api.Logger
 import au.id.jazzy.erqx.engine.models._
+import org.slf4j.LoggerFactory
 
 object MetaDataParser {
 
-  val NameFormatExtractor = """(.+)\.([^\.]+)""".r
-  val NameAttributeExtractor = """(\d{4})-(\d{1,2})-(\d{1,2})-(.+)""".r
-  val DateTimeParser = """(\d{4})/(\d{1,2})/(\d{1,2}) (\d{1,2}):(\d{2})""".r
-  val DateParser = """(\d{4})/(\d{1,2})/(\d{1,2})""".r
+  private val log = LoggerFactory.getLogger(getClass)
+
+  private val NameFormatExtractor = """(.+)\.([^\.]+)""".r
+  private val NameAttributeExtractor = """(\d{4})-(\d{1,2})-(\d{1,2})-(.+)""".r
+  private val DateTimeParser = """(\d{4})/(\d{1,2})/(\d{1,2}) (\d{1,2}):(\d{2})""".r
+  private val DateParser = """(\d{4})/(\d{1,2})/(\d{1,2})""".r
   private object ToInt {
     def unapply(s: String): Option[Int] = try Some(s.toInt) catch { case _: NumberFormatException => None }
   }
@@ -41,7 +43,7 @@ object MetaDataParser {
     val (nId, format) = name match {
       case NameFormatExtractor(id, format) => (id, format)
       case _ =>
-        Logger.warn("Could not extract blog post format from name: " + name)
+        log.warn("Could not extract blog post format from name: {}", name)
         (name, "html")
     }
 
@@ -54,7 +56,7 @@ object MetaDataParser {
           title
         )
       case _ => 
-        Logger.warn("Blog post file name not extractable: " + name)
+        log.warn("Blog post file name not extractable: {}", name)
         (None, None, nId)
     }
     
@@ -83,7 +85,7 @@ object MetaDataParser {
     val (nPermalink, format) = name match {
       case NameFormatExtractor(p, f) => (p, f)
       case _ =>
-        Logger.warn("Could not extract page format from name: " + name)
+        log.warn("Could not extract page format from name: {}", name)
         (name, "html")
     }
 

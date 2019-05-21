@@ -6,9 +6,9 @@ import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.services.MetaDataParser
 
 import scala.util.control.Exception._
-import play.api.Logger
 import play.api.i18n.Lang
 import au.id.jazzy.erqx.engine.models.BlogInfo
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
@@ -17,6 +17,8 @@ import scala.util.control.NonFatal
  * Loads the repository from git
  */
 class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
+
+  private val log = LoggerFactory.getLogger(getClass)
 
   def loadBlog(id: String, path: String, commitId: String): Blog = {
     val blogInfo = loadInfo(id, commitId)
@@ -70,7 +72,7 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
       } match {
         case Right(t) => Some(t)
         case Left(e) =>
-          Logger.warn(s"Unable to load theme for blog $blogId", e)
+          log.warn(s"Unable to load theme for blog $blogId", e)
           None
       }
     } getOrElse DefaultTheme
@@ -93,7 +95,7 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
           Some(Duration(duration))
         } catch {
           case NonFatal(t) =>
-            Logger.warn(s"Unable to parse assetsExpiry '$duration' for blog $blogId", t)
+            log.warn(s"Unable to parse assetsExpiry '$duration' for blog $blogId", t)
             None
         }
       }

@@ -1,10 +1,11 @@
 package au.id.jazzy.erqx.engine.actors
 
 import akka.actor.Actor
+
 import scala.concurrent.blocking
 import au.id.jazzy.erqx.engine.models._
 import au.id.jazzy.erqx.engine.services.git.{GitBlogRepository, GitRepository}
-import play.api.Logger
+import org.slf4j.LoggerFactory
 
 object BlogLoader {
   case class ReloadBlog(old: Blog)
@@ -15,6 +16,8 @@ object BlogLoader {
  * Actor responsible for loading a blog
  */
 class BlogLoader(gitRepository: GitRepository, blogRepository: GitBlogRepository) extends Actor {
+
+  private val log = LoggerFactory.getLogger(getClass)
 
   import BlogLoader._
 
@@ -29,7 +32,7 @@ class BlogLoader(gitRepository: GitRepository, blogRepository: GitBlogRepository
         gitRepository.fetch()
         val hash = gitRepository.currentHash
         if (hash != old.hash) {
-          Logger.info("Detected change on git repository for blog " + old.id + ", new hash is " + hash)
+          log.info(s"Detected change on git repository for blog ${old.id}, new hash is $hash")
           sender ! blogRepository.loadBlog(old.id, old.path, hash)
         } else {
           sender ! old

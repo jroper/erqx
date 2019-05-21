@@ -5,8 +5,9 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.stream.Materializer
 import au.id.jazzy.erqx.engine.actors.{BlogActor, BlogRequestCache}
 import au.id.jazzy.erqx.engine.models.{BlogConfig, ErqxConfig}
+import org.slf4j.LoggerFactory
 import play.api.i18n.MessagesApi
-import play.api.{Environment, Logger}
+import play.api.Environment
 import play.filters.gzip.GzipFilterConfig
 
 /**
@@ -15,6 +16,8 @@ import play.filters.gzip.GzipFilterConfig
 @Singleton
 class Blogs @Inject() (environment: Environment, erqxConfig: ErqxConfig, system: ActorSystem,
   messagesApi: MessagesApi, gzipFilterConfig: GzipFilterConfig)(implicit mat: Materializer) {
+
+  private val log = LoggerFactory.getLogger(getClass)
 
   lazy val blogs: Seq[(BlogConfig, ActorRef)] = {
     val blogs = {
@@ -26,7 +29,7 @@ class Blogs @Inject() (environment: Environment, erqxConfig: ErqxConfig, system:
 
     val sorted = blogs.sortBy(_._1.order)
 
-    Logger.info("Started blogs: " + sorted.map { blog =>
+    log.info("Started blogs: " + sorted.map { blog =>
       blog._1.name + ":" + blog._1.path
     }.mkString(", "))
 

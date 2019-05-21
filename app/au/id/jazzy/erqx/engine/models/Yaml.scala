@@ -1,14 +1,17 @@
 package au.id.jazzy.erqx.engine.models
 
-import java.time.{ZonedDateTime, ZoneId}
+import java.time.{ZoneId, ZonedDateTime}
 
 import scala.reflect.ClassTag
-import play.api.Logger
 import java.util.Date
+
+import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 
 case class Yaml(map: Map[String, AnyRef]) {
+
+  import Yaml.log
 
   def getString(key: String) = getAs[String](key)
   def getInt(key: String) = getAs[Int](key)
@@ -19,26 +22,29 @@ case class Yaml(map: Map[String, AnyRef]) {
   def getMap[T](key: String)(implicit ct: ClassTag[T]): Option[Map[String, T]] = getAs[Yaml](key).map(_.map.filter {
     case (k, t) if ct.runtimeClass.isInstance(t) => true
     case (k, other) =>
-      Logger.warn("Ignoring map value for key " + k + ", expected " + ct + " but was " + other)
+      log.warn("Ignoring map value for key {}, expected {} but was {}", k, ct, other)
       false
   }.asInstanceOf[Map[String, T]])
 
   def getList[T](key: String)(implicit ct: ClassTag[T]): Option[List[T]] = getAs[List[_]](key).map(_.filter {
     case t if ct.runtimeClass.isInstance(t) => true
     case other =>
-      Logger.warn("Ignoring list value for key " + key + ", expected " + ct + " but was " + other)
+      log.warn(s"Ignoring list value for key $key, expected $ct but was $other")
       false
   }.asInstanceOf[List[T]])
 
   def getAs[T](key: String)(implicit ct: ClassTag[T]): Option[T] = map.get(key).flatMap {
     case t if ct.runtimeClass.isInstance(t) => Some(t.asInstanceOf[T])
     case other =>
-      Logger.warn("Ignoring value for key " + key + ", expected " + ct + " but was " + other)
+      log.warn("Ignoring value for key {}, expected {} but was {}", key, ct, other)
       None
   }
 }
 
 object Yaml {
+
+  private val log = LoggerFactory.getLogger(classOf[Yaml])
+
   val empty = Yaml(Map())
 
   def parse(yaml: String, timezone: ZoneId) = {
@@ -54,7 +60,7 @@ object Yaml {
       case d: Date => ZonedDateTime.ofInstant(d.toInstant, timezone)
       case null => null
       case other =>
-        Logger.warn("Unexpected YAML object of type " + other.getClass)
+        log.warn("Unexpected YAML object of type {}", other.getClass)
         other.toString
     }
 
@@ -62,12 +68,12 @@ object Yaml {
       yamlToScala(new org.yaml.snakeyaml.Yaml().load(yaml)) match {
         case y: Yaml => y
         case other =>
-          Logger.warn("YAML was not object: " + other)
+          log.warn("YAML was not object: {}", other)
           Yaml.empty
       }
     } catch {
       case NonFatal(t) =>
-        Logger.warn("Error parsing YAML content", t)
+        log.warn("Error parsing YAML content", t)
         Yaml.empty
     }
   }
