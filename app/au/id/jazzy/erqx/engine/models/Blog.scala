@@ -169,7 +169,7 @@ final class Blog(val id: String, blogPosts: List[BlogPost], pages: List[Page], v
   val tags: Map[String, List[BlogPost]] =
     sorted.flatMap(post => post.tags.map(_ -> post))
       .groupBy(_._1)
-      .mapValues(_.map(_._2))
+      .map(kv => kv._1 -> kv._2.map(_._2))
 
   /**
    * Tag cloud, a list of tag names, number of posts, and tag weights, which is a number from 1 to 10

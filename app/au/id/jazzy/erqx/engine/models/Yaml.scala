@@ -52,7 +52,7 @@ object Yaml {
     import scala.collection.JavaConverters._
 
     def yamlToScala(obj: AnyRef): AnyRef = obj match {
-      case map: java.util.Map[String, AnyRef] @unchecked => new Yaml(map.asScala.toMap.mapValues(yamlToScala))
+      case map: java.util.Map[String, AnyRef] @unchecked => new Yaml(map.asScala.toMap.map(kv => kv._1 -> yamlToScala(kv._2)))
       case list: java.util.List[AnyRef] @unchecked => list.asScala.toList.map(yamlToScala)
       case s: String => s
       case n: Number => n

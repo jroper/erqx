@@ -13,12 +13,12 @@ bintrayPackage := "erqx"
 releaseCrossBuild := true
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-scalaVersion := "2.12.8"
-crossScalaVersions := Seq("2.11.12", "2.12.8")
+scalaVersion := "2.13.1"
+crossScalaVersions := Seq("2.12.10", "2.13.1")
 
 // Production dependencies
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-doc" % "1.8.2",
+  "com.typesafe.play" %% "play-doc" % "2.1.0",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.1.3.201810200350-r",
   "org.yaml" % "snakeyaml" % "1.23"
 )

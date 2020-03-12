@@ -2,8 +2,6 @@ package au.id.jazzy.erqx.engine.actors
 
 import akka.actor._
 import akka.routing._
-import java.io.InputStream
-import scala.concurrent.ExecutionContext
 import au.id.jazzy.erqx.engine.models._
 import akka.actor.Status.Failure
 import scala.util.control.NonFatal
@@ -48,7 +46,7 @@ class BlogActor(config: GitConfig, path: String, classLoader: ClassLoader) exten
   // If an update interval is configured, then schedule us to update on that interval
   private val updateJob = config.updateInterval.map { interval =>
     import context.dispatcher
-    context.system.scheduler.schedule(interval, interval) {
+    context.system.scheduler.scheduleAtFixedRate(interval, interval) { () =>
       self ! Update
     }
   }
@@ -78,7 +76,7 @@ class BlogActor(config: GitConfig, path: String, classLoader: ClassLoader) exten
 
   def loaded(blog: Blog): Receive = {
     case Fetch(key) =>
-      if (config.fetchKey.exists(_ == key)) {
+      if (config.fetchKey.contains(key)) {
         blogLoader ! ReloadBlog(blog)
         sender ! FetchAccepted
       } else {

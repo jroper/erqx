@@ -48,9 +48,6 @@ object BlogRequestCache {
 
 /**
   * Executes and caches the results of requests.
-  *
-  * @param lowWatermark When entries from the cache are expired, it will be drained to this value.
-  * @param highWatermark When the cache reaches this size, it will be drained to the low water mark.
   */
 private class BlogRequestCache(messagesApi: MessagesApi, cacheConfig: CacheConfig, gzipConfig: GzipFilterConfig)(implicit mat: Materializer) extends Actor with ActorLogging {
 
@@ -66,7 +63,7 @@ private class BlogRequestCache(messagesApi: MessagesApi, cacheConfig: CacheConfi
 
   // The number of bytes in the cache. This is based on the size of the body, and an approximate guess for the size of
   // each response header
-  private var cacheSize = 0l
+  private var cacheSize = 0L
   private var requestCache = Map.empty[RequestCacheKey, CachedResult]
 
   override def receive = {
