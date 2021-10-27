@@ -1,7 +1,7 @@
 @import au.id.jazzy.erqx.engine.models._
 @import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
 
-@(blog: Blog, router: BlogReverseRouter, title: Option[String])(implicit req: RequestHeader)
+@(blog: Blog, router: BlogReverseRouter, title: Option[String], extraHead: Option[Html])(implicit req: RequestHeader)
 
 <base href="@blog.path/"/>
 
@@ -15,3 +15,7 @@
 
 <link rel="shortcut icon" href="@router.webJarAsset("erqx-engine/erqx-icon.ico")" type="image/x-icon">
 <link rel="icon" href="@router.webJarAsset("erqx-engine/erqx-icon.ico")" type="image/x-icon">
+
+@for(content <- extraHead) {
+    @content
+}

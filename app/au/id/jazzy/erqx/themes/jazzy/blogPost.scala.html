@@ -5,7 +5,7 @@
 
 @(blog: Blog, router: BlogReverseRouter, post: BlogPost, content: String)(implicit req: RequestHeader, messages: Messages)
 
-@blog.info.theme.main(blog, router, Some(post.title)) {
+@blog.info.theme.main(blog, router, Some(post.title), post.properties.getString("head").map(Html.apply)) {
   <article>
     <h1 class="postTitle"><a href="@router.view(post)">@post.title</a></h1>
 

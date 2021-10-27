@@ -41,8 +41,8 @@ trait BlogTheme {
   /**
    * The main template.  This is included by the default blogPost, blogPosts and notFound templates.
    */
-  def main(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)(implicit req: RequestHeader, messages: Messages): Html =
-    au.id.jazzy.erqx.themes.jazzy.html.main(blog, router, title)(content)
+  def main(blog: Blog, router: BlogReverseRouter, title: Option[String], head: Option[Html] = None)(content: Html)(implicit req: RequestHeader, messages: Messages): Html =
+    au.id.jazzy.erqx.themes.jazzy.html.main(blog, router, title, head)(content)
 
   /**
    * The template for rendering a blog post
@@ -62,7 +62,7 @@ trait BlogTheme {
    * The template for rendering a page
    */
   def page(blog: Blog, router: BlogReverseRouter, page: Page, content: String)(implicit req: RequestHeader, messages: Messages): Html =
-    main(blog, router, page.title)(Html(content))
+    main(blog, router, page.title, page.properties.getString("head").map(Html(_)))(Html(content))
 
   /**
    * The template for rendering the not found page
@@ -74,8 +74,8 @@ trait BlogTheme {
   /**
    * The head section of the blog.  Used by the default main template.
    */
-  def head(blog: Blog, router: BlogReverseRouter, title: Option[String])(implicit req: RequestHeader, messages: Messages): Html =
-    au.id.jazzy.erqx.themes.jazzy.html.head(blog, router, title)
+  def head(blog: Blog, router: BlogReverseRouter, title: Option[String], extraHead: Option[Html] = None)(implicit req: RequestHeader, messages: Messages): Html =
+    au.id.jazzy.erqx.themes.jazzy.html.head(blog, router, title, extraHead)
 
   /**
    * The navigation links in the blog.  Used by the default main template.

@@ -1,12 +1,12 @@
 @import au.id.jazzy.erqx.engine.models._
 @import au.id.jazzy.erqx.engine.controllers.BlogReverseRouter
 
-@(blog: Blog, router: BlogReverseRouter, title: Option[String])(content: Html)(implicit req: RequestHeader, messages: Messages)
+@(blog: Blog, router: BlogReverseRouter, title: Option[String], extraHead: Option[Html])(content: Html)(implicit req: RequestHeader, messages: Messages)
 
 <!DOCTYPE html>
 <html lang="@blog.info.language">
   <head>
-    @blog.info.theme.head(blog, router, title)
+    @blog.info.theme.head(blog, router, title, extraHead)
   </head>
   <body>
 
