@@ -13,8 +13,8 @@ bintrayPackage := "erqx"
 releaseCrossBuild := true
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-scalaVersion := "2.13.1"
-crossScalaVersions := Seq("2.12.10", "2.13.1")
+scalaVersion := "2.13.8"
+crossScalaVersions := Seq("2.12.16", "2.13.8")
 
 // Production dependencies
 libraryDependencies ++= Seq(
@@ -37,8 +37,8 @@ libraryDependencies ++= Seq(
 )
 
 // Version file
-sourceGenerators in Compile += Def.task {
-  val dir = (sourceManaged in Compile).value
+Compile / sourceGenerators += Def.task {
+  val dir = (Compile / sourceManaged).value
   val hash = "git rev-parse HEAD".!!.trim
   val file = dir / "au" / "id" / "jazzy" / "erqx" / "engine" / "ErqxBuild.scala"
   if (!file.exists || !IO.read(file).contains(hash)) {
@@ -64,4 +64,4 @@ Concat.groups := Seq(
   "erqx-jazzy-theme.js" -> group(Seq("lib/jquery/jquery.min.js", "lib/prettify/prettify.js", "lib/prettify/lang-scala.js", "lib/retinajs/retina.js"))
 )
 
-pipelineStages in Assets := Seq(concat)
+Assets / pipelineStages := Seq(concat)
