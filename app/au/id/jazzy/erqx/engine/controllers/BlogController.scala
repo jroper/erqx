@@ -135,6 +135,16 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
     }
   }
 
+  def withDraftBlog(commitId: String)(block: BlogController => Action[Unit]): Action[Unit] = UncachedBlogAction.async { implicit req =>
+    req.blog.drafts.get(commitId) match {
+      case Some(blog) =>
+        block(new DraftBlogController(components, blogActor, router, blogRequestCache, serverPush, blog, commitId)).apply(req)
+      case None =>
+        sync(notFound(req.blog))
+    }
+  }
+
+
   def fetch(key: String): Action[AnyContent] = Action.async { implicit req =>
     (blogActor ? Fetch(key)) map {
       case FetchAccepted => Ok
@@ -147,7 +157,7 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
   /**
    * Action builder for blog requests. Loads the current blog, as well as handles etag caching headers
    */
-  private object UncachedBlogAction extends ActionBuilder[BlogRequest, Unit] {
+  protected def UncachedBlogAction: ActionBuilder[BlogRequest, Unit] = new ActionBuilder[BlogRequest, Unit] {
 
     override val parser: BodyParser[Unit] = components.parsers.empty
     override protected def executionContext: ExecutionContext = components.executionContext
@@ -199,6 +209,21 @@ class BlogController(components: ControllerComponents, blogActor: ActorRef, rout
   }
 
 }
+
+private class DraftBlogController(components: ControllerComponents, blogActor: ActorRef, router: BlogReverseRouter,
+                                  blogRequestCache: ActorRef, serverPush: ServerPush, draftBlog: Blog, commitId: String)
+  extends BlogController(components, blogActor, router.draft(commitId), blogRequestCache, serverPush) {
+
+  override protected def UncachedBlogAction = new ActionBuilder[BlogRequest, Unit] {
+    override val parser: BodyParser[Unit] = components.parsers.empty
+    override protected def executionContext: ExecutionContext = components.executionContext
+    override def invokeBlock[A](request: Request[A], block: BlogRequest[A] => Future[Result]): Future[Result] = {
+      block(new BlogRequest[A](request, draftBlog))
+    }
+  }
+
+}
+
 
 object BlogController {
   val startTime: Long = System.currentTimeMillis()

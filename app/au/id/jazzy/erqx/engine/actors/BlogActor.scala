@@ -28,7 +28,7 @@ class BlogActor(config: GitConfig, path: String, classLoader: ClassLoader) exten
   import BlogLoader._
   import BlogActor._
 
-  private val gitRepository = new GitRepository(config.gitRepo, config.path, config.branch, config.remote)
+  private val gitRepository = new GitRepository(config)
   private val blogRepository = new GitBlogRepository(gitRepository, classLoader)
 
   private val blogLoader = context.actorOf(

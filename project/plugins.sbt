@@ -1,4 +1,4 @@
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.16")
 addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.1.2")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.10")
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")

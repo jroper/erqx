@@ -82,6 +82,17 @@ class BlogRouter(controller: BlogController) extends SimpleRouter { self =>
     // Fetch
     case POST(p"/fetch/$key") => controller.fetch(key)
 
+    // Drafts
+    case GET(p"/drafts/$commitId" ? Page(page)) =>
+      controller.withDraftBlog(commitId)(_.index(page))
+
+    case req@GET(p"/drafts/$commitId/$_*") =>
+      controller.withDraftBlog(commitId) { draftController =>
+        new BlogRouter(draftController)
+          .withPrefix(s"/drafts/$commitId")
+          .routes(req).asInstanceOf[Action[Unit]]
+      }
+
     // Assets
     case GET(p"/$path*") => controller.asset(path)
   }
@@ -131,6 +142,10 @@ class BlogReverseRouter(assetsFinder: AssetsFinder, path: => String, globalPath:
 
   def webJarAsset(file: String) =
     Call("GET", s"$globalPath/_assets/lib/${assetsFinder.findAssetPath("/public/lib", "/public/lib/" + file)}")
+
+  def draft(commitId: String): BlogReverseRouter = {
+    new BlogReverseRouter(assetsFinder, s"$path/drafts/$commitId", globalPath)
+  }
 
   private def withPaging(path: String, page: Page) = {
     val qs = (Nil ++

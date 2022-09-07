@@ -122,7 +122,16 @@ object DefaultTheme extends BlogTheme {
  * @param hash The current hash of the repository at which point these blog posts were loaded from
  * @param path The path of the blog.  Does not end with "/", may be blank.
  */
-final class Blog(val id: String, blogPosts: List[BlogPost], pages: List[Page], val hash: String = "", val path: String, val info: BlogInfo, val lastUpdated: ZonedDateTime) {
+final class Blog(
+                  val id: String,
+                  blogPosts: List[BlogPost],
+                  pages: List[Page],
+                  val hash: String = "",
+                  val path: String,
+                  val info: BlogInfo,
+                  val lastUpdated: ZonedDateTime,
+                  val drafts: Map[String, Blog]
+                ) {
 
   /**
    * Blog posts are always listed in reverse chronological order, so we sort them and then reverse them

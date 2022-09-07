@@ -20,11 +20,29 @@ class GitBlogRepository(gitRepo: GitRepository, classLoader: ClassLoader) {
 
   private val log = LoggerFactory.getLogger(getClass)
 
-  def loadBlog(id: String, path: String, commitId: String): Blog = {
+  def loadBlog(id: String, path: String, commitId: String, gitDrafts: Seq[GitDraft]): Blog = {
     val blogInfo = loadInfo(id, commitId)
     val lastUpdated = ZonedDateTime.ofInstant(gitRepo.commitDate(commitId), blogInfo.timezone)
-    new Blog(id, loadBlogPosts(id, commitId, blogInfo.timezone),
-      loadPages(commitId, blogInfo.timezone), commitId, path, blogInfo, lastUpdated)
+
+    val drafts = gitDrafts.map { draft =>
+        val draftId = s"$id-draft-${draft.name}"
+        val draftInfo = loadInfo(draftId, draft.commitId)
+        val lastUpdated = ZonedDateTime.ofInstant(gitRepo.commitDate(draft.commitId), draftInfo.timezone)
+        draft.commitId -> new Blog(draftId,
+          loadBlogPosts(draftId, draft.commitId, draftInfo.timezone),
+          loadPages(draft.commitId, draftInfo.timezone), draft.commitId, path, draftInfo, lastUpdated, Map.empty)
+    }
+
+    val blog = new Blog(id, loadBlogPosts(id, commitId, blogInfo.timezone),
+      loadPages(commitId, blogInfo.timezone), commitId, path, blogInfo, lastUpdated, drafts.toMap)
+
+    val draftsMessage = if (drafts.isEmpty) {
+      "no drafts"
+    } else {
+      drafts.map(_._2.id).mkString("drafts: [", ",", "]")
+    }
+    log.info(s"Loaded blog with $draftsMessage")
+    blog
   }
 
   def loadBlogPosts(id: String, commitId: String, timezone: ZoneId): List[BlogPost] = {

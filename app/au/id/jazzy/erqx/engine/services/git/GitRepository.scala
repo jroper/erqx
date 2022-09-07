@@ -1,20 +1,26 @@
 package au.id.jazzy.erqx.engine.services.git
 
+import au.id.jazzy.erqx.engine.models.{GitConfig, GitNoAuthConfig, GitPasswordAuthConfig, GitSshAuthConfig}
+import com.jcraft.jsch.{JSch, Session}
+
 import java.io.{File, InputStream}
 import java.time.Instant
-
 import org.eclipse.jgit.lib._
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.ListBranchCommand.ListMode
 import org.eclipse.jgit.treewalk.filter.{PathFilter, PathSuffixFilter, TreeFilter}
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.transport.{JschConfigSessionFactory, OpenSshConfig, SshTransport, Transport, UsernamePasswordCredentialsProvider}
+import org.eclipse.jgit.util.FS
 import play.doc.{FileHandle, FileRepository}
 
 import scala.io.Source
+import scala.jdk.CollectionConverters._
 
-class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, remote: Option[String]) {
+class GitRepository(config: GitConfig) {
 
-  private val repository = new RepositoryBuilder().setGitDir(new File(gitDir, ".git")).build()
+  private val repository = new RepositoryBuilder().setGitDir(new File(config.gitRepo, ".git")).build()
   private val git = new Git(repository)
 
   def close() = repository.close()
@@ -22,19 +28,38 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
   /**
    * Do a fetch if configured to do so
    */
-  def fetch(): Unit = remote.foreach { r =>
-    git.fetch().setRemote(r).call()
+  def fetch(): Unit = config.remote.foreach { r =>
+    val command = config.authConfig match {
+      case GitNoAuthConfig => git.fetch()
+      case GitPasswordAuthConfig(username, password) =>
+        git.fetch().setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
+      case GitSshAuthConfig(keyFile) =>
+        git.fetch().setTransportConfigCallback((transport: Transport) => {
+          val sshTransport = transport.asInstanceOf[SshTransport]
+          sshTransport.setSshSessionFactory(new JschConfigSessionFactory() {
+            override def configure(hc: OpenSshConfig.Host, session: Session): Unit = {
+              session.setConfig("StrictHostKeyChecking", "no")
+            }
+            override def createDefaultJSch(fs: FS): JSch = {
+              val jsch = super.createDefaultJSch(fs)
+              jsch.addIdentity(keyFile)
+              jsch
+            }
+          })
+        })
+    }
+    command.setRemote(r).call()
   }
 
   /**
    * Get the current hash for the repo
    */
   def currentHash: String = {
-    val ref = remote.map("refs/remotes/" + _ + "/").getOrElse("") + branch
+    val ref = config.remote.map("refs/remotes/" + _ + "/").getOrElse("") + config.branch
     Option(repository.findRef(ref))
       .map(_.getObjectId.name())
       .getOrElse {
-        throw new RuntimeException("Could not find ref \"" + ref + "\" in repository " + gitDir)
+        throw new RuntimeException("Could not find ref \"" + ref + "\" in repository " + config.gitRepo)
       }
   }
 
@@ -52,7 +77,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
    * @return A tuple of the file size and its input stream, if the file was found
    */
   def loadStream(commitId: String, path: String): Option[ObjectLoader] = {
-    scanFiles(ObjectId.fromString(commitId), PathFilter.create(pathPrefix.getOrElse("") + path)) { treeWalk =>
+    scanFiles(ObjectId.fromString(commitId), PathFilter.create(config.path.getOrElse("") + path)) { treeWalk =>
       if (!treeWalk.next()) {
         None
       } else {
@@ -111,7 +136,7 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
   }
 
   def listAllFilesInPath(commitId: String, path: String): Option[Seq[String]] = {
-    val prefixedPath = pathPrefix.getOrElse("") + path
+    val prefixedPath = config.path.getOrElse("") + path
     scanFiles(ObjectId.fromString(commitId), PathFilter.create(prefixedPath)) { treeWalk =>
       def extract(list: List[String]): List[String] = {
         if (!treeWalk.next()) {
@@ -143,6 +168,24 @@ class GitRepository(gitDir: File, pathPrefix: Option[String], branch: String, re
       revWalk.dispose()
     }
   }
+
+  def listDrafts(): Seq[GitDraft] = {
+    config.draftPrefix match {
+      case Some(prefix) =>
+        val fullPrefix = config.remote match {
+          case Some(remote) => s"refs/remotes/$remote/$prefix"
+          case None => s"refs/heads/$prefix"
+        }
+        git.branchList().setListMode(ListMode.ALL).call()
+          .asScala
+          .collect {
+            case draft if draft.getName.startsWith(fullPrefix) =>
+              val branchName = draft.getName.stripPrefix(fullPrefix)
+              GitDraft(branchName, draft.getObjectId.name())
+          }.toSeq
+      case None => Nil
+    }
+  }
 }
 
 class GitFileRepository(gitRepository: GitRepository, commitId: String, base: Option[String]) extends FileRepository {
@@ -166,3 +209,5 @@ class GitFileRepository(gitRepository: GitRepository, commitId: String, base: Op
     }
   }
 }
+
+case class GitDraft(name: String, commitId: String)

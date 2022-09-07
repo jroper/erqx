@@ -61,6 +61,6 @@ class BlogSpec extends Specification {
 
   def post(id: String, year: Int, month: Int, day: Int, tags: String*) =
     BlogPost(id, id, id, ZonedDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC), id, "md", Set(tags:_*), Yaml.empty)
-  def blog(posts: BlogPost*) = new Blog("", posts.toList, Nil, "", "", BlogInfo("", None, "", ""), ZonedDateTime.now())
+  def blog(posts: BlogPost*) = new Blog("", posts.toList, Nil, "", "", BlogInfo("", None, "", ""), ZonedDateTime.now(), Map.empty)
 
 }
